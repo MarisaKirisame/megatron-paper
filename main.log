@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10.12) (preloaded format=pdflatex 2023.10.30)  30 SEP 2024 14:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10.12) (preloaded format=pdflatex 2023.10.30)  1 OCT 2024 13:04
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1050,7 +1050,7 @@ LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/b/n' will be
 (Font)              scaled to size 10.0pt on input line 134.
 LaTeX Font Info:    Font shape `OT1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 10.0pt on input line 147.
+(Font)              scaled to size 10.0pt on input line 146.
 
 [1.1{C:/Users/lolis/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/
 lolis/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lbtn_25tcsq.enc}{
@@ -1059,18 +1059,19 @@ pa5.enc}{C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine
 /lbtn_naooyc.enc}{C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/
 libertine/lbtn_nh77jq.enc}{C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/e
 nc/dvips/libertine/lbtn_7grukw.enc}]
-Underfull \vbox (badness 7397) has occurred while \output is active []
-
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 193.
+(Font)              scaled to size 8.0pt on input line 179.
  [2.2]
-[3.3] [4.4]
-LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
-(Font)              scaled to size 10.0pt on input line 298.
+Underfull \vbox (badness 1377) has occurred while \output is active []
 
+ [3.3]
+[4.4]
+LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
+(Font)              scaled to size 10.0pt on input line 308.
+ [5.5]
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 326.
+surrounding objects on input line 336.
 
 
 (C:\Users\lolis\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\se-pdfdoc.d
@@ -1079,7 +1080,7 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (C:\Users\lolis\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [5.5] (main.aux)
+) [6.6] (main.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-10-23>
@@ -1088,13 +1089,13 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 8A02016BBBE5F342BF806B0F32E2E274;3326.
  ) 
 Here is how much of TeX's memory you used:
- 21810 strings out of 474718
- 353178 string characters out of 5748456
+ 21817 strings out of 474718
+ 353331 string characters out of 5748456
  1943036 words of memory out of 5000000
  43057 multiletter control sequences out of 15000+600000
- 685966 words of font info for 260 fonts, out of 8000000 for 9000
+ 686512 words of font info for 264 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,18n,131p,1003b,634s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,19n,131p,1003b,635s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/Li
 nBiolinumT.pfb><C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/type1/public
 /libertine/LinBiolinumTB.pfb><C:/Users/lolis/AppData/Local/Programs/MiKTeX/font
@@ -1104,9 +1105,9 @@ a/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertineTB.pfb><C:/Use
 rs/lolis/AppData/Local/Programs/MiKTeX/fonts/type1/public/libertine/LinLibertin
 eTI.pfb><C:/Users/lolis/AppData/Local/Programs/MiKTeX/fonts/type1/public/newtx/
 txsys.pfb>
-Output written on main.pdf (5 pages, 427194 bytes).
+Output written on main.pdf (6 pages, 429663 bytes).
 PDF statistics:
- 185 PDF objects out of 1000 (max. 8388607)
- 32 named destinations out of 1000 (max. 500000)
+ 189 PDF objects out of 1000 (max. 8388607)
+ 33 named destinations out of 1000 (max. 500000)
  67785 words of extra memory for PDF output out of 74296 (max. 10000000)
 

@@ -132,6 +132,18 @@ multi-channel, radio interference, time synchronization}
 \renewcommand{\shortauthors}{G. Zhou et al.}
 
 \section{Introduction}
+Latency is a major key concern in modern web browser such as chromium, firefox, and safari. Ideally, a 60fps frame rate should be maintained to present smooth user experience as user browse and interact with web pages. When the frame rate objective is not achieved, the user will experience the lag from the web browser and might use another one. (should we hype up the consequence? e.g. maybe a online stock trading app was lagging which cause a trader to miss the optimal time to buy stock)
+
+A significant bottleneck to having good web latency is web page layout, which calculate position and size for each dom node, which then can be rendered into pixels on the screen. When the user interact with the web page, the dom tree will change, and will have to be re-layouted then re-rendered. As the rendering function, the javascript mutator and garbage collector, miscellaneous cost such as inter-process communication, all take significant time, layout got a budget of a few milliseconds. On such tight budget, every cycle count!
+
+To reduce latency introduced by web page layout, browser employ incremental layout algorithm. That is, when the dom tree change, the browser mark down all dependency(field in node) depending on the changed portion. Then, the incremental algorithm traverse the tree to find and fix the dependency. (maybe: emphasize batchness here. is it important? batchenss mean reps's work is non-applicable, and it also explain why we have separate mark and dirty instead of fixing immediately). Traversing the tree is the bottleneck in incremental layout, as accessing node that does not need fixing incur a large amount of l2 cache miss.
+
+Modern web browsers use summary bits on each node to denote whether the subtree is dirtied(need fixing) or cleaned. With the summary bits, incremental layout need not traverse the whole tree, but still need to traverse the ancestor of dirtied node. This is the spine of the dirtied node.
+
+The algorithm not only have to traverse the spine of the tree, but also the children of the spine, as it have to read the summary node to decide whether it need traversing.
+
+
+LATENCY KEY CONCERN
 
 Major web browser including Chromium, Firefox, and Safari use dirty bit algorithm to implement incremental web layout. Such algorithm maintain boolean bits on each dom node to track whether the node's property or its children's property need recomputation.
 
