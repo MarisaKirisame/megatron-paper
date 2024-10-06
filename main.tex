@@ -167,7 +167,7 @@ To sum up, our contributions are:
 \end{itemize}
 
 \section{Web layout}
-\subsection{Attribute Grammar}
+\subsection{Tree Traversal}
 Inside web browser, web page is presented as a dom tree. Inside the dom tree, each node store some intermediate property, such as the type, the html attribute, and css property of the value. It additionally store a doubly linked list of its children, and a parent/two sibling pointer, previous/next. 
 
 Web layout convert this tree into the layout tree, a tree of boxes, where parent boxes typically contain children boxes. Later pass such as rendering convert the layout tree into pixels on the screen.
@@ -175,69 +175,43 @@ Web layout convert this tree into the layout tree, a tree of boxes, where parent
 The layout of a node depend on the layout of it's neighbors: it's parent, children, and close sibling(previous/next). For example, the width of the box is the sum of the width of all children, where each children shift the x position by the width of it's previous node (how do we make this accurate?). Each node might also compute some value, such as intrinsic size, to aid computing the position and size of the box. To aid recomputation, we store both the intermediate value and the output of layout in-place, in the tree.
 
 \begin{verbatim}
-def layout-simple(self): real layout much more complex
+def layout-simple(self): # real layout much more complex
   self.x <-
     if has(self.previous) then self.previous.x + self.previous.width
-    elif has(self.parent) then self.parent.x else 0
+    elif has(self.parent) then self.parent.x
+    else 0
   for c in self.children:
     layout-simple(c)
-  self.width <- if has(self.last) then self.last.width-acc else 0
-  self.width-acc <- if has(self.last) then self.last.width-acc + self.width else 0
+  self.width <-
+    if has(self.last) then self.last.width-acc 
+    else 0
+  self.width-acc <-
+    if has(self.last) then self.last.width-acc + self.width 
+    else 0
 \end{verbatim}
-A layout algorithm that compute x position and width of each dom node.
+A layout algorithm that compute x position and width of each dom node. The above program is a tree traversal: it walk down the tree then walk up the tree, computing values for each node during the walk.
 
-As compute is local, that is, as value of a node depend on value of its neighbor, previous work such as (cite) model web layout as attribute grammar. (how detailed should i be in at explaining AG?) However, as we are uninterested in the scheduling aspect of attribute grammar, we assumed the user had already schedule computation into recursive traversal of the tree, there-and-back-again style.
+The above algorithm, while simple, already illuminate multiple key property of layout.
 
-\subsection{There And Back Again}
-The layout algorithm execute a sequence of taba-function on the root of the dom tree. Each taba-function can initialize some values using it's field or that of it's 5 references (or the nullness of the 5 references). It then will recursively invoke itself on each of the children, in the list order, and can initialize values with the same restriction as before.
+Functional: the tree shape is not modified during layout. The computed fields are also written only once, at initialization, then become readonly.
 
-def id/size(self):
-self.id <-
-if has(prev) then prev.id+1
-else if has(parent) then parent.id+1
-else 0;
-for c in self.children:
-c.id/size()
-self.size <-
-if has(last) then last.sizeacc+1
-else 1
-self.sizeacc <-
-if has(prev) then prev.sizeacc + self.size
-else self.size
+Local dataflow: only local data and their neighbor is accessed. For example, parent.parent is not accessed, and there are no pointers except the 5 specified by the dom tree. 
 
-The above figure is a simple taba program that assign a unique id and calculate the size of each node.
+Fixed controlflow: the control flow is decided by the tree shape and nothing else. In particular, while there are conditional in the expression used to initialized variables, said conditional cannot call id/size().
 
-Our formalization had deliberately introduced three key constraint.
+Driven by our observation, we had designed a DSL suitable for web layout. It capture the 3 facts above to restrict language expressivity, allowing a efficient incremental implementation, while still being expressive enough to implement multiple web layout feature such as the box model, hiding elements, absolute positioning, flex display, and linebreaking.
 
-Immutability constraint: the tree shape can not be modified during relayout. The computed fields can likewise only be written once at initialization. Such constraint is typical for incremental computation (cite adapton/memoization/sac/differential dataflow) as incremental computation have to replay old computation. 
+\begin{verbatim}
+  M(ain) := P_N()...
+  P(roc)_N := self.BB_X(); children.P_N(); self.BB_Y()
+  BB(BasicBlock)_X := self.V <- T... 
+  V(ar) := unique symbols
+  F(unction) := a predefined set of primitive functions
+  P(ath) := self | prev | next | parent | first | last
+  T(erm) := if T then T else T | F(T...) | P.V
+\end{verbatim}
 
-Data constraint: only local data and their neighbor can be accessed. For example, parent.parent is an illegal path and cannot be read/written to. This constraint simplify dependency tracking as it limit the amount of direct dependency of a field to the node's neighbor. Note that this constraint can be circumvented by introducing auxiliary variable.
-
-Control constraint: the control flow is decided by the tree shape and nothing else. In particular, while there are conditional in the expression used to initialized variables, said conditional cannot call id/size(), or other taba-function. This try to limit the work done in each expression, as recomputation work at the granularity of each variable initialization and not (sub)expression calculation.
-
-The figure presented above is a simplification of the web layout process. 
-
-web layout compute position and size for each dom node.
-
-
-Below we give a syntax and semantics of the DSL megatron, and explain the design rational.
-
-M(ain) := P\_N()... \\
-P(roc)\_N := self.BB\_X(); children.P\_N(); self.BB\_Y() \\
-BB(BasicBlock)\_X := self.N <- T... \\
-V(ar) := unique symbols \\
-F(unction) := a predefined set of primitive functions \\
-P(ath) := self | prev | next | parent | first | last \\
-T(erm) := V | if T then T else T | F(T...) | P.V
-
-We assumed that web page layout can be implemented in attribute grammar, and the attribute grammar have been scheduled into multiple 'there and back again' pass.
-
-That is, web page layout call a sequence of mutating function, where each function:
-\begin{itemize}
-	\item compute value for field x0, x1, x2...
-	\item recursively invoke itself for each of the children, left to right.
-	\item compute value for field y0, y1, y2...
-\end{itemize}
+The language describe a list of function, executing one after another. Each function call itself recursively on all children, initializing variable before and after. The variables can only be computed using limited control flow (branch that merge control flow immediately (formalize?)), primitive functions, and local variables. The initialization are grouped into basicblock, so we can talk about multiple initialization as a whole.
 
 write operational semantic? or is this too trivial so it doesnt need one?
 
