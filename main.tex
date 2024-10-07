@@ -175,18 +175,18 @@ Web layout convert this tree into the layout tree, a tree of boxes, where parent
 The layout of a node depend on the layout of it's neighbors: it's parent, children, and close sibling(previous/next). For example, the width of the box is the sum of the width of all children, where each children shift the x position by the width of it's previous node (how do we make this accurate?). Each node might also compute some value, such as intrinsic size, to aid computing the position and size of the box. To aid recomputation, we store both the intermediate value and the output of layout in-place, in the tree.
 
 \begin{verbatim}
-def layout-simple(self): # real layout much more complex
+def layout_simple(self): # real layout much more complex
   self.x <-
-    if has(self.previous) then self.previous.x + self.previous.width
-    elif has(self.parent) then self.parent.x
+    if has_path(self.previous) then self.previous.x + self.previous.width
+    elif has_path(self.parent) then self.parent.x
     else 0
   for c in self.children:
-    layout-simple(c)
+    layout_simple(c)
   self.width <-
-    if has(self.last) then self.last.width-acc 
-    else 0
-  self.width-acc <-
-    if has(self.last) then self.last.width-acc + self.width 
+    if has_path(self.last) then self.last.width_acc 
+    else self.basic_width # readonly variable supplied by the dom tree
+  self.width_acc <-
+    if has_path(self.last) then self.last.width_acc + self.width 
     else 0
 \end{verbatim}
 A layout algorithm that compute x position and width of each dom node. The above program is a tree traversal: it walk down the tree then walk up the tree, computing values for each node during the walk.
@@ -208,48 +208,57 @@ Driven by our observation, we had designed a DSL suitable for web layout. It cap
   V(ar) := unique symbols
   F(unction) := a predefined set of primitive functions
   P(ath) := self | prev | next | parent | first | last
-  T(erm) := if T then T else T | F(T...) | P.V
+  T(erm) := if T then T else T | F(T...) | HasPath(P) | P.V
 \end{verbatim}
 
-The language describe a list of function, executing one after another. Each function call itself recursively on all children, initializing variable before and after. The variables can only be computed using limited control flow (branch that merge control flow immediately (formalize?)), primitive functions, and local variables. The initialization are grouped into basicblock, so we can talk about multiple initialization as a whole.
+The language describe a list of procedure, executing one after another. Each procedure call itself recursively on all children, initializing variable before and after. The variables can only be computed using limited control flow (branch that merge control flow immediately (formalize?)), primitive functions, haspath query, and variable access. The initialization are grouped into basicblock, so we can talk about multiple initialization as once.
 
 write operational semantic? or is this too trivial so it doesnt need one?
 
-\subsection{Dirtying}
+\subsection{Incremental layout}
+The above subsection specified a language for describing a from scratch tree traversal, which can be used to implement web layout. However, when user interact with the web browser, the dom tree will be changed in 3 ways:
+\begin{enumerate}
+	\item Change of value. The html attribute or the css property of a dom node might change. For example, when the user click on a drop down bar, the display property of the drop down bar is set from "none" to "block", indicating that it is now visible.
+	\item Dom tree insertion. A dom tree is inserted as a sub tree. This typically occur during loading of a web page, where a temporary dom element is replaced with the final dom element.
+	\item Dom tree deletion. A sub tree is deleted from the dom tree. After initial loading, the temporary elements might be deleted.
+\end{enumerate}
 
-For each field in each node: keep a dirty bit, and a recursive dirty bit.
+When the dom tree change, the layout computed will be broken: a value might be dirtied, in that recomputing the value will give another result(todo: too strong, see other formalization). Likewise, a value might be uninitialized after dom tree insertion. The job of the incremental layout algorithm is to find and fix the problems(dirtiness and uninitialization). A key subtlety is that fixing problems yield more problems - when a dirtied value is recomputed, recomputing a value that depend on it will give another result, thus that value had become dirtied. This subtlety dictate that the incremental algorithm should fix a value before fixing its (transitive) dependents. An incremental algorithm that respect such dependency is called regret-free, as it need not fix the same field twice.
 
-Dirty bit is set iff the field is dirtied and need recomputing.
+We have to detect and mark dirtiness/uninitialization before fixing it.
 
-Recursive dirty bit is set iff any of such field in descendent is dirtied.
+\subsubsection{Marking changed field}
+When a initialized field F changed it's value, all field depending on it is dirtied. To locate all the field at runtime, we analyze all assignment statement in the program of form "self.X <- Y". For each occurrence of P.F in Y, we construct the reverse-path of P, mapping prev to next/next to prev, first/last to parent, and parent to all children, marking all X on the reverse-path. For all node on the reverse-path, P.F evaluate to the changed field, and thus need to be mark dirtied. (Note: it is possible to use a more precise dependency analysis, such that expression on the branch currently not evaluated is not considered dependency. However this is an orthogonal design decision to the central thesis of the paper, and add too much tracking overhead.)
+\subsubsection{Marking tree deletion}
+When a subtree is deleted, all field depending on any field in the root of the tree is marked dirtied, by following reverse-path like the above subsubsection. Note that we do not have to follow the reverse-path of the children, as all access in our language are local. Thus, the only field of a tree that can be directly observed by a node outside of the tree is the root node of the subtree(too long, dont like). Moreover, subtree deletion might change the result of haspath query. For example, deleting the last children of a node cause HasPath(First) and HasPath(Last) query to return false instead of true. Thus, when deleting the first/last/only children of a tree, reverse-path to the corresponding HasPath query is calculated and field using such query is marked dirtied.
+\subsubsection{Marking tree insertion}
+Field are mark dirtied using the same method that mark field for tree deletion. Additionally, the inserted tree is marked uninitialized.
 
-A field is dirtied if any of its dependency is modified. Inversely, when a field is modified, it's dependent is dirtied. This can be compute rather efficiently, and the dirty bit is setted. The recursive dirty bit is setted via a recursive traversal up the spine, stopping until the said recursive bit is already set.
+\subsubsection{Marking and Fixing}
+To support marking, each node have a dirtied bit for each field, and a single initialized bit, all initialized to false. Marking dirtiness turn the corresponding bit on. Re-layout then have to find all corresponding dirtied field and uninitialized node, to execute the corresponding assignment to fix the tree. Once a field is fixed, or a node is initialized, the corresponding bit is changed as well to reflect the status of the tree.
 
-def set-recursive-dirty-bit-x(self):
-if self.recursive-dirty-bit-x:
-pass no need to call parent, as the spine must already be set
-else:
-self.recursive-dirty-bit-x <- true
-if self.parent:
-self.parent.set-recursive-dirty-bit-x()
+A naive incremental implementation can recursively traverse the tree as if rerunning from scratch, but only re-executing the dirtied assignment. While trivial, the algorithm is regret-free: as it execute all dirtied assignment in a from-scratch order, the dependency must be fixed before the dependents. We will be exploiting this insight in our subsequent incremental layout implementation. However, it is still unsatisfactory: multiple traversal on the complete tree will cause too much memory access, and the subsequent l2 miss will be unacceptable.
 
-Re-layout is done by calling the incremental version of each taba function. Like the non-incremental version, the taba function recursively invoke itself on each of the children, executing a tree-traversal. Unlike the non-incremental version, however, only dirtied fields is recomputed (then the dirty bit is set back to false), and node where no recursive bit(that correspond to fields initialiized during the function) is on will skip all computation, as the node and it's subtree is clean. Before the function exit, the recursive dirtied bits are toggled off, as they and the subtree have been cleaned.
+\subsubsection{Spine+1 Traversal}
+The common approach employed by all major web browsers such as chrome, firefox, safari is the Spine+1 Traversal algorithm.
 
-During the recomputation, more field are modified, and their dependent are dirtied. The corresponding dirty bit and recursive dirty bit is then likewise toggled.
+For each procedure in the layout algorithm, each node maintain a summary bit that dictate whether that procedure need to access the node(and its children) to fix dirtiness/uninitialization. The summary bit is initially off, and when a node is marked, the summary bit is turned on. The parent's summary bit also have to be turned on, and so on, until a node with the bit turn on have been found (when such a node is found, the node and its ancestor already have the bit on, so there is no need to continue traversing up), or until it reached the root node.  Each procedural traversal can then skip all node where the corresponding summary bit is off.
 
-In order to clean a node deep down in the tree, the above algorithm have to traverse the spine, using the recursive dirty bit as breadcrumb, to reach the node.
+\begin{verbatim}
+	def set_summary_bit_x(self):
+	if self.summary_bit_x:
+	pass # no need to call parent, as the spine must already be set
+	else:
+	self.summary_bit_x <- true
+	if self.parent:
+	self.parent.set_summary_bit_x()
+\end{verbatim}
 
-Furthermore, all children of the spine have to be traversed, as the dirty bit and the recursive dirty bit have to be read to determine if further processing is needed.
+Using this approach, access to non-essential node (nodes that does not need fixing) is greatly reduced. If a node is dirtied, it's ancestor will have the summary bit turn on, leaving a breadcrumb which allow the node to be found.
+
+This breadcrumb is the spine of the node, which is non-essential: the spine does not need fixing, but must be accessed in order to find the essential node that need fixing. Not only does this algorithm have to access the spine, it also have to access all children of the spine, as it must read the summary bit of a node to be able to skip it. The spine alongside its children is named spine+1.
 
 This mean that a dom tree with a deep depth, or a dom node with lots of children, will incur a large spine+1 and kill layout performance. The google chrome team had long observed this problem and correspondingly advice frontend programmer to optimize tree depth and max children size. This advice had been codified into the performance monitoring tool lighthouse.
-
-\subsection{Correctness condition}
-A field is inconsistent if re-computing it yield a different value.
-
-For the incremental layout algorithm to be correct, all field have to be consistence once the evaluation end. Inconsistency arise from doing too little work.
-
-\subsection{Optimality condition}
-An incremental layout algorithm is sub-optimal if it re-evaluate the same expression twice during a single execution. Suboptimality arise from doing work in the wrong order. Specifically, when a field and its (recursive)dependent is inconsistent, the field must be reevaluated before its dependent. Otherwise, reevaluation of the field might cause the dependent to be inconsistent again, causing extra reevaluation.
 
 \section{Spineless Traversal}
 \subsection{Order Maintenance}
