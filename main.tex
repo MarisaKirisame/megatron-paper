@@ -261,39 +261,144 @@ This breadcrumb is the spine of the node, which is non-essential: the spine does
 This mean that a dom tree with a deep depth, or a dom node with lots of children, will incur a large spine+1 and kill layout performance. The google chrome team had long observed this problem and correspondingly advice frontend programmer to optimize tree depth and max children size. This advice had been codified into the performance monitoring tool lighthouse.
 
 \section{Spineless Traversal}
-\subsection{Order Maintenance}
-We implemented order maintenance in <two simplified algorithm for linked list>.
+To fix the problem of traversing unnecessary node, we developed a Spineless Traversal algorithm. The algorithm store all dirtied node into a priority queue, indexed by the time order, to ensure the regret-free property. During incremental layout, fields are popped one by one from the priority queue, and their values recomputed. The incremental layout is finished when all elements in the queue is popped and processed.
+\subsection{Time Order}
+We implemented Time Order using Order Maintenance in <two simplified algorithm for linked list>.
 
-Order maintenance is implemented by a doubly linked list of separated doubly linked list. Each node in the linked list contain an unsigned integer, called label for comparison, and each node in the lower-level list contain a pointer to the upper-level list that contain it.
+Order Maintenance is a data structure that maintain total order between node of the data structure. It is implemented with the three following API:
 
-A order maintenance node is a node of the lower linked list.
+\begin{enumerate}
+	\item Compare: OM -> OM -> Ordering, which establish a total order between all OM
+	\item Head: OM, which return the smallest OM
+	\item Insert: OM -> OM, this is the heart of order maintenance, which create a new OM node right next to an already existing one. This mean that, the returned node is only larger then the original node and every value smaller then the original node, but smaller then every node.
+\end{enumerate}
 
-Two order maintenance node can be compared by comparing the upper level label and (if equal) the lower level label.
+Compare to the typical use of integer or floating point as time, order maintenance allow creation of any new timepoint in the middle of two other timepoint, by calling insert. On the other hand, one might attempt to do this on integer by taking the average of two timepoint, but will quickly run into precision issue.
+
+The order maintenance datastructure is a doubly-linked-list of doubly-linked-list structure, where a order maintenance node(OM) is a node of the inner list. Additionally, the inner list hold a pointer to the outer list node which contain it, and each list node (inner or outer) hold an unsigned integer.
+
+Order maintenance is implemented by a doubly linked list of separated doubly linked list. Each node in the linked list contain an unsigned integer, called label for comparison, and each node in the lower-level list contain a pointer to the upper-level list that contain it. Comparison is implemented as lexical ordering on the outer level list then the lower level list. On insertion, a new node is inserted after the input node, and the label is the average of the neighboring label. If the two neighboring label only differ by 1, the gap is not big enough to fit a new label, and the datastructure rebalance itself, reassigning new label to existing values to make space. During relabeling, new outer-level-node might be created to ensure there is enough gap between two element. As rebalancing is not a bottleneck, we will not focus on that.
 
 \subsection{Priority Queue}
 Our priority queue is implemented via a binary heap where each element is implicit. That is, all elemented are stored in an array, and node at index x have children at node at index 2x+1 and 2x+2. The root node live at index 0.
 
-Huh this is pretty vanilla, maybe should not even be a section
+While our priority queue is very standard, one noteworthy point is that the priority queue hold no duplicate element. That is, each dirtied field will only be inserted once.
+
+This is because a field is only pushed onto the queue when a node is initially dirtied - that is, the dirty bit is set from false to true. When there are diamond dependency, there will be subsequent assignment of the same dirty bit to true, but as the bit is already on, it will not be re-enqueued.
+
 \subsection{Putting it together}
 With order maintenance and priority queue, we can implement a spineless traversal algorithm.
 
 The algorithm utilize order maintenance as logical time. The algorithm maintain a global OM as the current time, and each field in each node have a OM to denote when is it initialized. More precisely, everytime a field is initialized, the counter advance, and the old counter is assigned to the OM of that field.
 
-Fields in nodes also have dirty bit but not recursive dirty bit. When a node is freshly dirty (the bit is set from false to true), the node and the field name is inserted into the priority queue, indexed by the OM node. \todo{should we talk about dirty bit as central or as an optimization?}
+Fields in nodes also have dirty bit but not recursive dirty bit. When a node is freshly dirty (the bit is set from false to true), the node and the field name is inserted into the priority queue, indexed by the OM node.
 
 During recomputation, node/field pair are popped from the priority queue and repaired 1-by-1. Just like dirty bit, reevaluation will also dirty more fields, and such fields are also pushed into the queue.
 
+\subsection{Handling Insertion}
+
 \section{Implementation}
-\subsection{HTML features}
+One big challenge faced by our work is, can data structure manipulation compete on performance with setting summary bit?
+
+While the summary bit algorithm does incur extra L2 cache miss, it only use does rudimentary operation on bit. On the other hand, our spineless algorithm have to maintain nontrivial data structure. As incremental layout often complete in thousands or even hundreds of cycle, every cycle count. To fit into the computation budget, we implemented the two data structure, order maintenance and priority queue meticulously(word too big?), avoiding allocation, cache miss and branch misprediction as much as possible.
+\subsection{Optimizing Order Maintenance}
+\subsubsection{Pointer Compression and Custom Allocator}
+For each level of the list, we used a hand-written, single-threaded pooling allocator that only support malloc/free of the fixed size. Further more, as we know the number of elements are smaller then 2\^32, a 32 bit pointer is used (todo: 16 bit?). Implementation wise speaking, the allocator is made from a dynamic array of block size, holding all values, and a dynamic array of 32 bit index, pointing to free space in the previous array. This design pack nodes of the list tightly together, eliminating fragmentation completely so malloc/free does no search at all, and compress pointer to 32 bits, so more node fit in a cache line and incur less cache miss. The allocator had pre-allocate typically enough space to avoid resizing at runtime.
+\begin{verbatim}
+template<typename T, typename P=uint32_t>
+struct Allocator {
+  std::vector<T> pool;
+  std::vector<P> freed;
+  T* addressof(P p) { return freed[p]; }
+  P malloc() { 
+  	if (freed.empty()) {
+  	  pool.push_back(T());
+  	  return pool.size() - 1;
+  	} else {
+  	  P p = freed.back();
+  	  freed.pop_back();
+  	  return p;
+  	}
+  }
+  void free(P p) {
+  	freed.push_back(p);
+  }
+}
+\end{verbatim}
+\subsubsection{Branchless Comparison}
+As order maintenance is used to index value in a priority queue, the comparison is executed extremely frequently. The comparison will fetch memory mostly from l2 (todo: measure?) as most nodes are on the lower level vs higher level. Moreover the comparison is done using quite few instruction, so the bottleneck is the pipeline stall induced by the conditional. Moreover, branch predictor can not help here, as the comparison result might goes both way (I want to say 50 50 but not true, goes both way seems a bit weak). To fix this, we implemented a comparison function that is completely branchless, relying on conditional move or bit operation depending on the architecture to do the trick. On our x86 machine which have conditional move available, it is compiled to conditional move. (maybe remove the bit operation branch?) The comparison take 5 cycles \todo{sync with lazer on his microbenchmark}.
+\begin{verbatim}
+SignedLabel operator<=>(const _l2_node &l, const _l2_node &r) {
+  Label lpl = l.parent->label;
+  Label rpl = r.parent->label;
+  
+  // A readable but inefficient implementation
+  // if (lpl != rpl) {
+  //   return lpl - rpl;
+  // } else {
+  //   return l.label - r,label;
+  // }
+  
+  // Comparing the result of the lower level label
+  SignedLabel result1 = static_cast<SignedLabel>(l.label - r.label); 
+  // Comparing the result of the higher level label
+  SignedLabel result2 = static_cast<SignedLabel>(lpl - rpl); 
+  
+#ifndef CMOV_SUPPORTED
+  // A 64 bit integer where every bit is 1 (if lpl != rpl) or 0 (if lpl == rpl)
+  SignedLabel mask1 = static_cast<SignedLabel>(lpl == rpl) - 1; 
+  // selecting result1 or result2 base on mask  
+  return ((result1 & ~mask1) | (result2 & mask1)); 
+#else
+  SignedLabel result;
+
+  asm volatile("cmp %1, %2\n" \\ test for equalness of lpl and rpl
+               "cmove %3, %0\n" \\ if equal move result1 into result
+               "cmovne %4, %0\n" \\ if notequal move result2 into result
+               : "=&r"(result)
+               : "r"(lpl), "r"(rpl), "r"(result1), "r"(result2));
+
+  return result;
+#endif
+}
+\end{verbatim}
+\subsubsection{Optimizing priority queue}
+I think the code there could likewise be made more branchless. However I need to do it.
+\subsection{Web layout implementation}
+To evaluate our spineless traversal against the standard approach, we had implemented a web layout engine in our tree traversal language. While supporting all html features will be way overscoped for our work, we had implemented a wide variety of html features, which are core to web browsing experience, and many of them have non-subtle incremental behavior. All in all, the non-incremental layout algorithm consists of 750 lines of (non-incremental) code, and compute 40 fields for each node. Below is a list of major features we had implemented.
+\todo{subsubsection or itemize?}
 \begin{itemize}
-	\item visibility (display)
-	\item position (static vs absolute)
-	\item line breaking
-	\item flex
 	\item box model
-	\item intrinsic width/height
-	\item fixed width/height
-	\item min/max width/height
+	Each dom node is represented as box with x, y, width and height. The box of a dom node typically contain all the boxes of its children. Likewise, two dom node with no ancestor relation will typically have a separated dom node.
+	
+	The width and height of the box is typically computed from the width and height of its children, but css property can set a fixed width/height, or a min/max width/height. \todo{should we implement margin?}
+	
+	When this occur, the fixed box act as a 'stopping point' for recomputation: the change in the box's children's layout will not effect the box's layout, as it is dictated by an external source. 
+	
+	\todo{talk more about stopping recomputation in technical section web layout}
+	\item line breaking
+	Without line breaking, the children of a dom node is layout as a single line, with each subsequent box having a larger x value, while the y value stay the same. 
+	
+	Some node might cause line break, introducing a new line and continuing the layout process there.
+	
+	The height of each line is the max height of a box of the line, and the width of each line is the sum of width of box.
+	
+	The width of the parent box is max of width of each line and the height of the parent box is the sum of height of each line.
+	
+	Incrementally speaking, when a new node is added, but it does not have the highest height, nor adding it make the line the longest line, the box consume existing space only, without any need for other boxes to make way. Thus other layout boxes need no change.
+	\item Display
+	A node might have the css property display set to "none". This indicate that the node and all its subchildren will have a box of size 0 and is thus invisible. Such node are typically metadata node such as javascript or css file. 
+	
+	Incrementally speaking, such node are typically lazily loaded: the website will display a preview version of the web page, loading such extra file in the background. Once the loading is finished, it is added to the dom tree. When loaded, nodes with display="none" should not change the layout in anyway, thus little recomputation is needed.
+	\item position (static vs absolute)
+	Another usage of display is to setup hover boxes. While on wikipedia, when hovering above a hyperlink to another wikipedia article, the website will pop up a preview of the article, shadowing part of the existing document. This is implemented with a box of absolute positioning, such that it is freed from typical box model relationship and is displayed directly on the screen. The box already existed when the page complete loading, only with display="none" set to hide it; hovering set it to some visible value temporarily, and setting it back to none once done.
+	
+	Incrementally speaking, absolute positioning does not effect other layout, so change in node of absolute positioning should only recompute up to said box.
+	\item Flex
+	Flex is the most complex feature we supported. To compute flex, some auxiliary values, shrink-to-fit width/height needed to be compute as well. shrink-to-fit width/height is like typical width/height computation, only that it is calculating the minimum dimension needed to fit the node, instead of a default one, which (does what?). Once shrink-to-fit dimensions for all children is computed, we can compute the 'extra space' for all children, by subtracting box dimension with sum of shrink-to-fit dimensions of children. The children additionally have a css property 'flex-grow' which dictate the portion of the extra space it should inherit. The node finally distribute its extra space, and each children recieved a portion according to its flex-grow divided by the sum of all flex-grow. Additionally, children that have reached its max-width/max-height, should be excluded from the extra-space splitting calculation. \todo{check this part}
+	
+	Flex is one of the most complex feature of html, requiring computing multiple auxiliary value, and is full of corner cases. Yet, we have less trouble then we thought implementing the feature. Moreover, while our tree traversal language seems highly restrictive in first sight, it did not provide much hurdle in our flex implementation, and most trouble of flex come from the feature itself. This serve as a stress testing, demonstrating that our modeling stand up to complex feature of the html.
+	\todo{what is the incremental implication of flex?}
 \end{itemize}
 \todo{We also have some features that is too small for a bullet point (e.g. image with width and not height/vice versa), which should not be talked about in detail, but i still think we should brief over. how should i structure it?}
 \subsection{Compiler optimization}
