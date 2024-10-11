@@ -213,8 +213,6 @@ Driven by our observation, we had designed a DSL suitable for web layout. It cap
 
 The language describe a list of procedure, executing one after another. Each procedure call itself recursively on all children, initializing variable before and after. The variables can only be computed using limited control flow (branch that merge control flow immediately (formalize?)), primitive functions, haspath query, and variable access. The initialization are grouped into basicblock, so we can talk about multiple initialization as once.
 
-write operational semantic? or is this too trivial so it doesnt need one?
-
 \subsection{Incremental layout}
 The above subsection specified a language for describing a from scratch tree traversal, which can be used to implement web layout. However, when user interact with the web browser, the dom tree will be changed in 3 ways:
 \begin{enumerate}
@@ -234,28 +232,29 @@ When a subtree is deleted, all field depending on any field in the root of the t
 \subsubsection{Marking tree insertion}
 Field are mark dirtied using the same method that mark field for tree deletion. Additionally, the inserted tree is marked uninitialized.
 
-\subsubsection{Marking and Fixing}
+\subsection{Double Dirty Bit}
 To support marking, each node have a dirtied bit for each field, and a single initialized bit, all initialized to false. Marking dirtiness turn the corresponding bit on. Re-layout then have to find all corresponding dirtied field and uninitialized node, to execute the corresponding assignment to fix the tree. Once a field is fixed, or a node is initialized, the corresponding bit is changed as well to reflect the status of the tree.
 
 A naive incremental implementation can recursively traverse the tree as if rerunning from scratch, but only re-executing the dirtied assignment. While trivial, the algorithm is regret-free: as it execute all dirtied assignment in a from-scratch order, the dependency must be fixed before the dependents. We will be exploiting this insight in our subsequent incremental layout implementation. However, it is still unsatisfactory: multiple traversal on the complete tree will cause too much memory access, and the subsequent l2 miss will be unacceptable.
 
-\subsubsection{Spine+1 Traversal}
+
 The common approach employed by all major web browsers such as chrome, firefox, safari is the Spine+1 Traversal algorithm.
 
 For each procedure in the layout algorithm, each node maintain a summary bit that dictate whether that procedure need to access the node(and its children) to fix dirtiness/uninitialization. The summary bit is initially off, and when a node is marked, the summary bit is turned on. The parent's summary bit also have to be turned on, and so on, until a node with the bit turn on have been found (when such a node is found, the node and its ancestor already have the bit on, so there is no need to continue traversing up), or until it reached the root node.  Each procedural traversal can then skip all node where the corresponding summary bit is off.
 
 \begin{verbatim}
-	def set_summary_bit_x(self):
-	if self.summary_bit_x:
-	pass # no need to call parent, as the spine must already be set
-	else:
-	self.summary_bit_x <- true
-	if self.parent:
-	self.parent.set_summary_bit_x()
+def set_summary_bit_x(self):
+  if self.summary_bit_x:
+    pass # no need to call parent, as the spine must already be set
+  else:
+    self.summary_bit_x <- true
+    if self.parent:
+      self.parent.set_summary_bit_x()
 \end{verbatim}
 
 Using this approach, access to non-essential node (nodes that does not need fixing) is greatly reduced. If a node is dirtied, it's ancestor will have the summary bit turn on, leaving a breadcrumb which allow the node to be found.
 
+\subsection{Spine+1 Problem}
 This breadcrumb is the spine of the node, which is non-essential: the spine does not need fixing, but must be accessed in order to find the essential node that need fixing. Not only does this algorithm have to access the spine, it also have to access all children of the spine, as it must read the summary bit of a node to be able to skip it. The spine alongside its children is named spine+1.
 
 This mean that a dom tree with a deep depth, or a dom node with lots of children, will incur a large spine+1 and kill layout performance. The google chrome team had long observed this problem and correspondingly advice frontend programmer to optimize tree depth and max children size. This advice had been codified into the performance monitoring tool lighthouse.
