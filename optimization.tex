@@ -1,0 +1,250 @@
+\section{Optimization}
+The Double Dirty Bit algorithm uses minimal computation (just set a bit!)
+  but is extremely cache-unfriendly (accesses the spine + 1),
+  while the spineless traversal is computationally expensive
+  (priority queue and order maintenance)
+  but cache-friendly (accesses only necessary nodes).
+For spineless traversal to be faster,
+  the computationally expensive steps in spineless traversal
+  have to be meticulously optimization
+  to avoid allocation, reduce memory traffic,
+  and optimize branch mispredictions.
+
+\subsection{Subtree Insertion}
+\label{sec:tree-insertion}
+Bulk insertions into the layout tree are common in our data set.
+This typically seems to be the result of lazy loading:
+  a ``shell'' web page loads first, and shows a loading indicator;
+  then the ``content'' loads and is inserted into the page
+  as a single large subtree.
+This can occur in several stages, with a ``shell''
+  first inserting ``subshells'' which in turn load subcomponents themselves.
+Handling this requires
+  efficient bulk insertion of a large subtree in one step.%
+\footnote{
+  Just enqueueing all fields of all nodes in the subtree
+    is not a good idea---it will create a large queue with slow queue operations.
+  In our experiments, this often took the queue
+    from tens to thousands of members, leading to a small integer slowdown.
+}
+
+Our solution treats inserted subtrees as a single unit in the priority queue.
+In other words, queue elements now refer to either a single node
+  or to the whole subtree rooted at that node;
+  the order maintenance order for either node is the same.
+At allocation time, new layout nodes have all their fields dirty;
+  thus, a queue cannot contain both a single-node and subtree object
+  for the same node.
+When a subtree object is dequeued from the priority queue,
+  the current layout pass is performed on the whole subtree,
+  creating all necessary order maintenance nodes in the correct order.
+Throughout this pass, no nodes are enqueued or dequeued
+  saving queue traffic and shrinking the size of the queue.
+Note that any nodes that refer to the newly-inserted node
+  do so through paths like \textsf{prev} or \textsf{first};
+  these fields are dirtied when the subtree is inserted
+  so do not need to be dirtied again
+  when the subtree layout pass is done.
+
+\subsection{Pointer Compression and Custom Allocator}
+Order maintenance objects have to be allocated every time
+  new layout nodes are inserted;
+  optimizing that allocation is essential.
+We use a hand-written pool allocator for order maintenance objects;
+  in fact, we use separate pools for high- and low-level objects
+  to enhance locality.
+Since allocations are always for the same size,
+  our custom allocator is significantly simpler than the system allocator.
+
+Our pooled allocator, \texttt{OMPool},
+  is shown in Figure~\ref{fig:allocator}.
+It is paramaterized by \emph{two} types:
+  the type of allocated object \texttt{T}
+  and the index type \texttt{P} for pointers to allocated objects.
+Crucially,
+  \texttt{malloc} and \texttt{free} return and consume
+  the pointer type \texttt{P} instead of raw pointers.
+By making \texttt{P} a smaller integer type,
+  like \texttt{uint32} or \texttt{uint16}, this not only saves memory but also increases
+  the number of order-maintenance objects per cache line,
+  which in turn improves throughput.
+In our implementation, we use 32-bit pointers;
+  this limits web pages to a few billion elements,
+  a size far beyond what any browser can handle,
+  but conveniently makes the total size
+  of an order maintenance object 128 bits.
+Exactly two order maintenance objects
+  then fit in each cache line,
+  with no order maintenance objects split across two.
+By contrast, an experiment with 16-bit pointers
+  actually increased runtime---because, we suspect,
+  it lead to order maintenance objects
+  splitting across two cache lines,
+  which introduced additional stalls.
+
+The actual implementation of \texttt{OMPool} is standard;
+  it stores a \texttt{pool} of memory as a \texttt{std::vector},
+  in which we ensure sufficient capacity at startup.
+Freed elements are placed in a separate \texttt{freed} vector,
+  which is preferentially drawn from by \texttt{malloc}.
+Because the objects are all the same size,
+  there is no fragmentation and \texttt{malloc}/\texttt{free}
+  are nearly instantaneous.
+Moreover, since spineless traversal
+  creates order maintenance objects in order,
+  allocation patterns are extremely favorable,
+  with nearby nodes placed nearby in memory.
+
+\begin{figure}
+\begin{verbatim}
+
+template<
+  typename T,             // Type of allocated object
+  typename P=uint32_t     // Integer type for "pointers"
+> struct OMPool {
+  std::vector<T> pool;    // Fast allocation, maximize cache usage
+
+  std::vector<P> freed;   // Rapid reuse minimizes cache churn
+  
+  // Implementation is straightforward
+  T* addressof(P p) { return &(pool[p]); }
+  P malloc();
+  void free(P p) { freed.push_back(p); }
+}
+\end{verbatim}
+\caption{A pooling allocator that focuses on reducing cache misses.}
+\label{fig:allocator}
+\end{figure}
+
+\subsection{Branchless Order Maintenance Comparison}
+Priority queue pushes and pops spend basically all of their time
+  comparing order maintenance objects.
+Order maintenance objects are small and,
+  thanks to our allocator, local in memory,
+  making cache misses rare when accessing them.
+However, order maintenance object comparison has two cases
+  (same or different second-level lists)
+  and the bottleneck ends up being the pipeline stall
+  induced by the conditional.
+The branch predictor does not help much,
+  because (thanks to the heap) the comparison is unpredictable.
+We therefore implemented a branchless comparison function,
+  relying on conditional move instructions instead;
+  in a microbenchmark, this reduces comparison time
+  to 5 cycles; Figure~\cite{fig:compare} shows the
+  assembly implementation.
+
+
+\begin{figure}
+\begin{verbatim}
+bool operator<(const _l2_node &l, const _l2_node &r) {
+  Label lpl = l.parent->label, rpl = r.parent->label;
+  Label ll = l.label, rl = r.label;
+  uint64_t result;
+
+  asm volatile(
+    "xor %%rbx, %%rbx\n"
+    "cmp %1, %2\n"
+    "seta %%bl\n"
+    "xor %%rax, %%rax\n"
+    "cmp %3, %4\n"
+    "seta %%al\n"
+    "cmove %%rbx, %%rax\n"  
+    : "=&a"(result)
+    : "r"(ll), "r"(rl), "r"(lpl), "r"(rpl));
+
+  return result;
+}
+\end{verbatim}
+\caption{
+  The branchless comparison code is 7 instructions long,
+    but the two \texttt{xor} instructions
+    clear a register and are thus handled by the register renamer;
+    the result is a five-cycle comparison
+    for order-maintenance objects.
+}
+\label{fig:compare}
+\end{figure}
+
+\subsection{Dependency Deduplication}
+
+When synthesizing the dirty bit propagation code,
+  we make sure to only dirty any given field once per field computation.
+For example, if a field $N.V$ is used twice in an expression,
+  or if two different paths $\mathsf{first}.V$ and $\mathsf{last}.V$
+  reverse to the same field,
+  the field is only dirtied once.
+This deduplication is especially challenging in the case
+  of $N?$ expressions,
+  since whether or not a field is dirtied can depend on whether an element
+  is the first/last/other child of its parent.
+Moreover, the dirty bit is checked before pushing to the priority queue;
+  this means a node field only appears in the priority queue once,
+  which keeps the queue small.
+
+\subsection{Field packing}
+
+To further shrink the size of the priority queue,
+  we use a single dirty bit to cover multiple co-computed fields.
+Instead of a dirty bit per field,
+  we use two dirty bits per pass---%
+  one for the pre-order-computed fields
+  and one for post-order-computed fields.
+This further reduces the number of unique dirty bits
+  set during the dirty bit propagation.
+Field packing in this way is a common optimization in real browsers;
+  the trade-off is that it reduces the complexity
+  (and thus cache misses in) invalidation traversal
+  at the cost of possibly more field recomputations
+  (since the browser must now recompute \emph{all} covered fields
+  when a dirty bit is set)l
+  the trade-off appears to be worth it.
+The priority queue now likewise store objects
+  that name a pass (and a pre/post location)
+  instead of a specific field,
+  and order maintenance objects likewise correspond
+  to passes (plus pre/post) instead of to individual fields.
+This reduces the number of OM objects needed
+  and reduces the size of the priority queue.
+More generally, one can think of the priority queue
+  as storing dirty bits themselves,
+  however those are assigned by the application in question.
+Spineless traversal can thus be applied
+  to finer- or coarser-grained field packing,
+  though it also benefits more from coarser-grained packing,
+  which makes the priority queue smaller and speeds up operations on it.
+
+\subsection{Field representation}
+
+Recall that priority queue entries
+  refer to either a subtree or a node,
+  and also name a phase plus pre/post location.
+We combine the subtree-or-node bit with the phase and pre/post location
+  into a simple enum, which we store in a byte.
+We use the enum as an index into a jump table,
+  while allows us to efficiently execute the field recomputation
+  that corresponds to a single priority queue entry.
+
+\subsection{Attempted, Failed Optimizations}
+
+We also attempted a number of further optimizations
+  that did not improve performance.
+Ultimately, low-level cycle counting is an empirical art,
+  and we don't have clear explanations for why these failed.
+\begin{itemize}
+\item A hybrid between Double Dirty Bit and spineless traversal,
+  using a summary bit for subtree dirty bit propagation
+  but the priority queue for more distant jumps.
+  We were unable to make switching between the two modes efficient enough
+  to be competitive.
+\item Use a splay tree for the priority queue to improve locality.
+  Resulted in a slowdown.
+\item Use a red-black tree for the priority queue.
+  Resulted in a slowdown. The classic min-heap is best.
+\item Use a 1-based array representation for binary heap
+  to cut instructions when finding the parent/children.
+  Resulted in a slowdown.
+\item Cut \texttt{OMPool} pointers to 16 bits, and use 16-bit OM labels.
+  Did not see a speedup compared to 32 bits.
+\item Pointer tagging to move boolean bit into pointers to reduce object size.
+\end{itemize}

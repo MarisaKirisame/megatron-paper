@@ -1,0 +1,236 @@
+\section{MegaTron}
+
+To evaluate Spineless Traversal,
+  we implement it for a simplified web layout algorithm
+  implemented in the DSL of Figure~\ref{fig:dsl}
+  and compiled by a compile we call MegaTron.
+In this section, we first describe
+  the layout modes implemented,
+  then how we compile the DSL to a layout engine,
+  and finally compare Spinless Traversal to Double Dirty Bit
+  on a collection of real-world web page interactions.
+
+\subsection{Web Layout Algorithm}
+\label{sec:layout-impl}
+
+To compare Spineless Traversal and Double Dirty Bit,
+  we needed a web layout algorithm
+  that was decoupled from its invalidation strategy.
+Unfortunately, existing browser rendering engines
+  are too complex and too tightly coupled
+  to their current invalidation strategy,
+  making it impossible to reuse them.
+We instead implemented our own web layout algorithm
+  based on the Cassius and MEDEA formalizations%
+  ~\cite{cassius-1,cassius-2,yufeng-2}.
+Naturally, this implementation is simplified
+  compared to a real-world web browser
+  and only implements a subset of features.
+However, we took care to implement several features
+  with complex invalidation behavior,
+  including intrinsic width, flex-box layout, and positioning.
+In total, our implementation is 700 lines of code
+  in a custom DSL called Megatron,
+  which compute approximately 50 fields for each layout node.
+The remainder of this section describes
+  several key layout features implemented in our layout algorithm.
+
+\paragraph{Box model}.
+Each layout node has an $x$, $y$, width and height field.
+Typically the rectangle this represents contains
+    all of the node's children, while sibling elements
+    don't overlap.
+In general, width is computed top-down
+  (children's width depend on parent's width),
+  height is computed bottom-up
+  (parent's height is sum of children's heights)
+  and $x$ and $y$ are computed in-order.
+This forms long dependency chains between elements,
+    where updating one element can cause many others
+    to be transitively dirtied.
+However, the \texttt{width},
+    \texttt{min-width}, and \texttt{max-width} CSS properties,
+    and similar for \texttt{height},
+    can directly set width and height,
+    breaking these dependency chains.
+Our layout algorithm's support for these properties
+    means this early-stopping behavior is tested.
+That said, even the
+  explicit \texttt{width} and \texttt{height} properties
+  allow ``percentage values'' like \texttt{50\%},
+  which are resolved relative to the parent and thus
+  still create inter-node dependencies.
+	
+\paragraph{Line Breaking}
+Line breaking lays out inline layout nodes (text)
+  horizontally from left to right,
+  until the edge of the parent box is reached,
+  and which point the next layout node is placed
+  at the left edge of its parent,
+  one line below its previous sibling.
+Line breaking requires handling control dependencies,
+  where one layout nodes' width may move layout nodes
+  from one line to another by changing line breaking.
+Additionally, our layout algorithm
+  allows different lines to have different height
+  (based on the height of the largest layout node in the line),
+  which introduces a field (line height)
+  that is dependent on may different nodes (each word in the line).
+This has a number of interesting effects for invalidation.
+For example, adding a node node to a line
+  may cause no change if it is not the tallest node in the line.
+However, if the new node is now the tallest node,
+  that may cause the line to become taller,
+  which in turn can cause all other text on the page to move down,
+  causing a lot of invalidation.
+
+\paragraph{Display}
+Nodes have a \texttt{display} property that changes
+  whether they act line words (\texttt{inline})
+  or paragraphs (\texttt{block}).
+The \texttt{display} property can also be set to \texttt{none},
+  in which case the layout nodes are not shown on the page
+  and have almost no effect on layout.
+Changing a layout node's \texttt{display} property
+  between \texttt{block} and \texttt{none}
+  is a common way to implement drop-down menus,
+  pop-ups, and other elements that appear and disappear,
+  such as the ``preview'' hover effects on Wikipedia.
+Importantly,
+  changes to \texttt{display: none} nodes
+  should not invalidate any other nodes and should be fast.
+On the other hand, a node switching
+  from \texttt{display: none} to \texttt{display: block}
+  effectively adds a subtree to the layout tree,
+  which is handled specially in Spineless Traversal.
+  
+\paragraph{Position}
+An element with \texttt{position: absolute}
+  is manually assigned a position on the page
+  by the web developer.
+This is commonly used for popups, tooltips, and other effects
+  that appear over other page content.
+It is also common
+  to change the manually-assigned $x$ and $y$ positions
+  from JavaScript, such as to move a tooltip away from the cursor.
+Layout nodes with absolute positioning do not affect
+  the position of other layout nodes outside their subtree,
+  and handling changes to $x$ and $y$ positions quickly
+  is essential.
+
+\paragraph{Intrinsic sizes}
+In a number of cases,
+  a layout node's width or height is computed from
+  its ``intrinsic'' size,
+  which effectively measures how large it would need to be
+  to contain all its text without line breaks.
+For example, absolutely-positioned elements
+  compute their width and height this way by default.
+Importantly, intrinsic widths are computed bottom-up,
+  but then used in the top-down width computation
+  and then the bottom-up height computation.
+This means intrinsic sizes require the use of
+  multiple layout phases
+  and require Spineless Traversal to support such.
+
+\paragraph{Flex-box}
+Flex-box layout is the most complex feature
+  our layout algorithm supports.
+In flex-box layout there is flex container element
+  whose children are flex items.
+The width/height of flex items depends on
+  the intrinsic sizes of the other flex items and
+  the actual size of the flex container.
+Properties like \texttt{flex-grow} and \texttt{flex-shrink}
+  determine how the intrinsic sizes of the flex items
+  are adjusted to compensate for either extra or not enough
+  available space in the flex container.
+The \texttt{max-} and \texttt{min-width}/\texttt{height} properties
+  can also cap the growth/shrinkage of individual flex items.
+In all, our implementation of flex-box layout
+  uses 9 of intermediate fields
+  and requires 2 passes to compute all of them.
+
+\paragraph{Miscellaneous}
+We also implemented a variety of miscellaneous features,
+  including automatic sizing of images and video,
+  manual line breaks with the \texttt{<br>} element,
+  and conditional elements like \texttt{<noscript>}
+  (which are only rendered if JavaScript is disabled,
+  not the case in our tests).
+We also had to add a special case for \texttt{<svg>} elements,
+  whose children describe drawing commands
+  that do not participate in layout.
+Finally, a variety of minor tweaks
+  like the \texttt{width} and \texttt{height} HTML attributes
+  (which behave slightly differently from the CSS properties)
+  were also implemented.
+
+\subsection{Compiler}
+\label{sec-compiler}
+
+\todo{Talk about spineless tagless}
+
+This layout algorithm is implemented in the Megatron DSL
+  and then compiled to C++ to maximize performance.
+Passes are compiled to three C++ functions:
+  the pass itself,
+  a function that performs just the pre-order assignments
+  and a function that performs just the post-order assignments.
+The compiler type-checks all fields, attributes, and properties
+  using Hindley-Milner type inference~\cite{HM}
+  and uses appropriate unboxed C++ member variables
+  to store the relevant values.
+Importantly, this means a single node and all its fields
+  are contiguous in memory
+  (as it would be a real web browser)
+  with a minimum of pointers
+  (beyond the standard parent/first/last/next/previous pointers
+  to other layout nodes)
+  and that field access is compiled to a memory offset.
+All string values (like the keyword values for \texttt{display})
+  are interned and represented in C++ as
+  a single \texttt{enum} type,
+  meaning that no string allocation or comparison
+  is performed at runtime.
+Discriminated unions are used for fields with units.
+The bottom line is that the compiled code is
+  long but readable, idiomatic, and performant C++ code
+  with no allocation, hash, or string operations.
+This is critical, because it means that,
+  like in a real web browser,
+  computing fields is very fast
+  and the cache misses from finding dirty fields
+  are a measurable fraction of the runtime.
+
+The compiler also synthesizes all
+  dirty bit propagation code.
+Specifically, the compiler examines
+  each assignment in each pass,
+  determines which fields on which neighbor nodes are read
+  to compute each field,
+  and computes the inverse neighbor relation.
+Every field assignment
+  compares the new and old value in the field
+  and sets dirty bits only if the new and old value differ.
+The actual invalidation traversal algorithm
+  (Double Dirty Bit or Spineless)
+  is encapsulated in an global value
+  that provides a method to dirty a node/field
+  and an iterator over all dirty nodes.
+The incremental layout entry point function
+  iterates over all dirty nodes
+  and calls the relevant pass functions.
+The compiler also generates functions to modify the tree,
+  either by inserting and deleting tree nodes
+  or by changing an attribute or property.
+These generated functions dirty the appropriate nodes and fields,
+  including using the special case for subtree insertion
+  for Spineless Traversal.
+
+To ensure our implementation is correct,
+  the compiler can also generate a from-scratch layout function
+  which does not use dirty bits at all
+  and instead recomputes the entire layout from scratch.
+This was extremely valuable during development
+  and gives us confidence that our invalidation algorithm is correct.

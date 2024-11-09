@@ -1,0 +1,47 @@
+
+\section{Introduction}
+
+Latency is a major concern for modern web rendering engines
+  such as those used in Chrome, Safari, and Firefox.
+Ideally, a rendering engine
+  would redraw the page 60 times per second
+  to guarantee smooth animations, fluid interactions,
+  and prompt responses as user browse and interact with web pages.
+When this frame rate cannot be met,
+  the user experiences lag, and may be forced to use another web application, browser, or device.
+Moreover, demand for low-latency rendering is only increasing
+  with modern 120\,Hz displays.
+
+Layout is a key driver of web rendering latency.
+Layout means calculating the size and position
+  of each element of the web page,
+  after which the page can be rendered into pixels on the screen.
+Every time the user interacts with the web page
+  by hovering over an element,
+  receiving updated data,
+  or even observing an animation,
+  the web page, and thus its tree of nodes, changes.
+To show the updated page to the user,
+  the browser must then re-laid-out.
+Since there are many rendering phases besides layout,
+  layout must be completed in a sub-millisecond budget 
+  n order to meet the 60 frame-per-second goal.
+On such tight budget, every cycle counts!
+
+\paragraph{Incrementalization}
+The key optimization that makes this possible is \emph{incrementalization}. That is, when the web page changes, the browser identifies a subset of the page whose size and position can change. Specifically, the browser \emph{marks} all fields in all nodes that may need to be recomputed. Then, when the next frame must be drawn, the layout algorithm traverses the node tree to find and recompute those fields. For small layout changes---as one would see in an animation or interaction---traversing the tree to find those fields can be the bottleneck, especially since every node access is likely to incur an L2 cache miss.
+
+The standard algorithm for finding and recomputing the dirty fields is a ``double dirty bit'' algorithm, which uses summary bits to avoid traversing unchanged subtrees of the node tree. While effective in many cases, this algorithm has a core flaw: it requires traversing the root node, every node between it and a dirty node, and any node adjacent to that path. This ``spine plus one'' can contain hundreds of clean nodes on large web pages, especially because web page node trees are typically far from balanced, often with both deeply-nested ``wrapper'' nodes and containers with dozens or hundreds of children. Since each node access introduces its own cache miss, traversing the ``spine plus one'' can stall the layout algorithm for hundreds of microseconds. Indeed, this problem had been widely observed. For example, Google's widely-used web performance debugging tool, Lighthouse, uses tree depth and maximum children count as performance metrics.
+
+\paragraph{Spineless Traversal}
+
+We introduce \textit{spineless traversal}: a new, faster algorithm for incremental layout. Unlike the standard ``double dirty-bit'' algorithm, spineless traversal accesses only dirty nodes, and therefore reduces cache misses. To do so, spineless traversal stores the set of invalidated nodes in a priority queue that allows jumping directly to the next dirty node. This avoids accessing the `+`spine plus one'' and thus achieves better latency.
+
+The key to making this work is maintaining the correct traversal order. Recomputing a single field on a single node can ``dirty'' all fields that depend on it, and the set of transitive dependencies is complex. Fields must therefore be recomputed in a specific order, and spineless traversal must respect that order as it jumps from node to node. Spineless traversal enforces this using an \emph{order maintenance} data structure. Order maintenance assigns a logical time to each field on each node, and provides an efficient way to check which logical time comes first.
+
+We implement spineless traversal in a new DSL for browser layout algorithms, Megatron. To match the extremely-tight latency budgets of modern browsers, Megatron uses a variety of low-level optimizations, including unboxing, a custom allocator, pointer compression, and a five-cycle instruction sequence for logical time comparisons.
+
+\paragraph{Evaluation}
+As our main test case, we implement a fragment of the CSS~2.1 specification in Megatron. Our fragment includes complex features including line breaking, flex-box, \texttt{display} changes, intrinsic sizes, min/max width/height, and absolute positioning and is based on the Cassius~\cite{cassius-1} formalization of CSS~2.1. Our implementation of this fragment covers over 700 lines and involves computing approximately 50 properties for every node. This implementation provides a realistic and taxing workload for invalidation algorithms.
+
+We execute this implementation, using both the standard double dirty bit algorithm and the spineless traversal algorithm, on  \TotalDiffCount incremental layouts of \TotalTraceCount real-world web pages, including Twitter, Discord, Github, and Lichess. Spineless Traversal is \DBPQoverhead times as fast on average. On small changes, which typically represent interactions like hover, typing, or animations, spineless traversal achieves speedups of \todo{$10\times$} or more. Meanwhile, the largest layout invalidations, which typically are less-latency-critical events like page loads, only see a slowdown of \todo{$30\%$}, with only \todo{$30\%$} of incremental layouts seeing a slowdown.
