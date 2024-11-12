@@ -1,4 +1,4 @@
-\documentclass[format=acmsmall, review=true, screen=true]{acmart}
+\documentclass[acmsmall, anonymous, review, screen]{acmart}
 
 \usepackage{syntax}
 \usepackage{booktabs} % For formal tables
@@ -50,7 +50,8 @@
 \begin{document}
 % Title portion. Note the short title for running heads 
 \title[Spineless]{Spineless Traversal for Layout Invalidation}  
-\author{Marisa Kirisame {marisa@cs.utah.edu}}
+\author{Marisa Kirisame}
+\email{marisa@cs.utah.edu}
 \orcid{1234-5678-9012-3456}
 \affiliation{%
   \institution{University of Utah}
@@ -79,7 +80,46 @@
   \country{USA}}
 
 \begin{abstract}
+Latency is a major concern for web rendering engines
+  like those in Chrome, Safari, and Firefox.
+These engines reduce latency by using
+  an \emph{incremental layout algorithm}
+  to redraw the page when
+  the user interacts with it.
+In such an algorithm,
+  nodes that change frame-to-frame are marked dirty;
+  only the dirty nodes need be processed
+  to draw the next frame,
+  dramatically reducing latency.
+However, the standard incremental layout algorithm
+  must search the tree for dirty nodes,
+  accessing a number of auxiliary nodes
+  in the process.
+These auxiliary nodes
+  add cache misses and stalled cycles,
+  and are responsible for a sizable fraction
+  of all layout latency.
 
+We introduce a new, faster incremental layout algorithm
+  called Spineless Traversal.
+Spineless Traversal
+  uses a more computationally demanding
+  priority queue algorithm
+  to avoid the need to access auxiliary nodes
+  and thus reduces cache traffic and stalls.
+This leads to dramatic speedups
+  on the most latency-critical interactions
+  such as hovering, typing, or animations.
+Moreover, thanks to numerous low-level optimizations,
+  we are able to make Spineless Traversal
+  competitive across the whole spectrum of
+  incremental layout workloads.
+As a result, across on \NumFrames~benchmarks,
+  Spineless Traversal is faster on \PctFaster,
+  with a mean speedup of \MeanSpeedup,
+  with the speedups concentrated in
+  the most latency-critical interactions
+  such as hovering, typing, or animations.
 \end{abstract}
 
 \include{numbers}

@@ -208,3 +208,10 @@ Spineless Traversal is also faster on average outside this subset,
 \end{figure}
 
 \subsection{Case Study: Wikipedia}
+To gain a deeper understanding of Spineless Traversal, we focus on Wikipedia. More specifically, we opened a Wikipedia page, waited for it to load, and hover above its link. Doing so cause Wikipedia to display a preview of the hovered link. We then moved the cursor away from the link, causing the preview window to disappear, and repeat this hovering process multiple times.
+
+Unlike \texttt{lobste.rs}, the Wikipedia page is a medium web page with 2300 dom nodes, too big to be displayed on the screen.%
+\footnote{A large page can goes above 10 thousands dom nodes.}
+Yet it is still unbalanced, with a depth of 23, a fanout of 51, and a max spine+1 of 119.
+
+The Wikipedia page run for a total of 25 frames. Of the 25 frames, 1 of them is an initial frame, which load up a empty page with 1 single dom node. \footnote{We observed a slowdown from ~350 cycles to ~1050 cycle on this frame} The full page is mostly subsequently loaded in 3 separate frames: one frame load the raw HTML and insert it into the empty root node, one frame load the CSS file, then apply styling, calculating the corresponding CSS properties for every nodes in the tree (thus changing all nodes), and one frame load up fonts files and change all text from the default fonts to them. Measuring only overhead times, we observed a slowdown of Spineless Traversal over Double Dirty Bit on all 3 frames: The page load went from taking 344k cycles to 987k cycles; Loading fonts from 974k to 1045l, and Loading CSS from 1873k to 2593k. Of the reamining 21 frames, 7 of them are region loading, where 

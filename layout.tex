@@ -82,7 +82,8 @@ The page nonetheless contains 69 elements,
   in other words, the page is highly imabalanced.
 Among the links (\texttt{<a>} elements),
   the spine+1 can contain as many as 30 elements, half the complete tree,
-  due to the unbalanced tree.}
+  due to the unbalanced tree.
+  \todo{Compress in the vertical dimension}}
 % https://lobste.rs/s/7ixd88/c_complexity_compiler_bugs
 \label{fig:dom-tree-raw}
 \end{figure}
@@ -119,7 +120,8 @@ def layout_simple(self): # real layout much more complex
     if has_path(prev) then prev.height_acc + self.height 
     else 0
 \end{verbatim}
-\caption{A layout algorithm that compute width of each dom node. The above program is a tree traversal: it walk down the tree then walk up the tree, computing values for each node during the walk.}
+\caption{A layout algorithm that compute width of each dom node. The above program is a tree traversal: it walk down the tree then walk up the tree, computing values for each node during the walk.
+}
 \label{fig:layout-simple}
 \end{figure}
 
@@ -431,6 +433,8 @@ Since the summary bit is recursive over the subtree,
   or at a node with the summary bit already on.
 
 \begin{figure}
+\begin{minipage}[t]{0.4\linewidth}
+\scriptsize
 \begin{verbatim}
 def find_dirty_nodes(self):
     if self.dirty:
@@ -440,8 +444,11 @@ def find_dirty_nodes(self):
         for child in self.children:
             find_dirty_nodes(child)
 \end{verbatim}
+\end{minipage}\hfill%
+\begin{minipage}[t]{0.6\linewidth}
 \caption{Finding the dirty nodes in a tree.}
 \label{fig:find-dirty-nodes}
+\end{minipage}
 \end{figure}
 
 The summary bit allows layout to skip recursing into a subtree

@@ -141,18 +141,18 @@ bool operator<(const _l2_node &l, const _l2_node &r) {
   Label lpl = l.parent->label, rpl = r.parent->label;
   Label ll = l.label, rl = r.label;
   uint64_t result;
-
   asm volatile(
-    "xor %%rbx, %%rbx\n"
-    "cmp %1, %2\n"
-    "seta %%bl\n"
-    "xor %%rax, %%rax\n"
-    "cmp %3, %4\n"
-    "seta %%al\n"
-    "cmove %%rbx, %%rax\n"  
+  
+    "xor   %%rbx,  %%rbx    \n"
+    "cmp   %1,     %2       \n"
+    "seta  %%bl             \n"
+    "xor   %%rax,  %%rax    \n"
+    "cmp   %3,     %4       \n"
+    "seta  %%al             \n"
+    "cmove %%rbx,  %%rax    \n"
+    
     : "=&a"(result)
     : "r"(ll), "r"(rl), "r"(lpl), "r"(rpl));
-
   return result;
 }
 \end{verbatim}
@@ -247,4 +247,6 @@ Ultimately, low-level cycle counting is an empirical art,
 \item Cut \texttt{OMPool} pointers to 16 bits, and use 16-bit OM labels.
   Did not see a speedup compared to 32 bits.
 \item Pointer tagging to move boolean bit into pointers to reduce object size.
+\item Storing the \texttt{left}/\texttt{right} pointers in the OM list in a different location from the elements \texttt{label} and the \texttt{parent}/\texttt{children} pointer, to improve cache locality. Did not see improvement.
+\item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. Did not see improvement.
 \end{itemize}
