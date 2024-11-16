@@ -76,8 +76,8 @@ For example, on the Google website we tested
 \subsection{Results}
 
 \begin{figure}
+\includegraphics[scale=0.4]{DBPQ.png}
 \begin{minipage}[t]{0.48\linewidth}
-\includegraphics[width=\linewidth]{DBPQOverhead.jpg}
 \caption{
 The invalidation traversal time for all \NumFrames frames,
     with Double Dirty Bit time on the $x$ axis
@@ -91,7 +91,6 @@ Both axes are in log scale, meaning Spineless Traversal is often
 \label{fig:xy}
 \end{minipage}\hfill%
 \begin{minipage}[t]{0.48\linewidth}
-\includegraphics[width=\linewidth]{DBPQCDF.jpg}
 \caption{
   A CDF of the ratio between
     Double Dirty Bit time and Spineless Traversal time
@@ -111,10 +110,10 @@ Both axes are in log scale, meaning Spineless Traversal is often
 \iffalse
 \begin{figure}
 \begin{subfigure}{0.5\linewidth}
-    \includegraphics[width=\linewidth]{DBPQLargeOverhead.jpg}
+    \includegraphics[width=\linewidth]{DBPQLargeOverhead.png}
 \end{subfigure}\hfill%
 \begin{subfigure}{0.5\linewidth}
-    \includegraphics[width=\linewidth]{DBPQLargeCDF.jpg}
+    \includegraphics[width=\linewidth]{DBPQLargeCDF.png}
 \end{subfigure}
 \caption{
 The overhead scatter plot and the speedup cdf,
@@ -186,18 +185,26 @@ On this latency-critical subset,
   the geometric mean speedup is larger,
   at \MeanSpeedupSmall,
   and a smaller fraction of frames suffer slowdowns.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{DBPQHist.png}
+\label{fig:nodes-accessed}
+\caption{Histograms of Number of Nodes Accessed by Double Dirty Bit and Spineless Traversal. Double Dirty Bit access much more nodes compare to Spineless Traversal, so the latter cause much fewer cache misses.}
+\end{figure}
+
 Spineless Traversal is also faster on average outside this subset,
   likely because the 1\% threshold is an imprecise heuristic,
-  but the dramatically larger speedup in this latency-critical subset
+  but the dramatically larger speedup 
+  in this latency-critical subset
   supports the idea that Spineless Traversal helps most
   precisely on those points where latency is most important.
 
 \begin{figure}
-\begin{subfigure}{0.5\linewidth}
-    \includegraphics[width=\linewidth]{DBPQSmallOverhead.jpg}
+\includegraphics[scale=0.4]{DBPQSmall.png}
+\begin{subfigure}{0.48\linewidth}
 \end{subfigure}\hfill%
-\begin{subfigure}{0.5\linewidth}
-    \includegraphics[width=\linewidth]{DBPQSmallCDF.jpg}
+\begin{subfigure}{0.48\linewidth}
 \end{subfigure}
 \caption{The overhead scatter plot and the speedup CDF,
   restricted to frames where fewer than 1\% of fields
@@ -207,11 +214,112 @@ Spineless Traversal is also faster on average outside this subset,
 \label{fig:dbpq-small}
 \end{figure}
 
-\subsection{Case Study: Wikipedia}
-To gain a deeper understanding of Spineless Traversal, we focus on Wikipedia. More specifically, we opened a Wikipedia page, waited for it to load, and hover above its link. Doing so cause Wikipedia to display a preview of the hovered link. We then moved the cursor away from the link, causing the preview window to disappear, and repeat this hovering process multiple times.
+\subsection{Case Study: Twitter}
+To gain a deeper understanding of Spineless Traversal,
+  we focus on Twitter (now X), a social media platform.
+More specifically,
+  we focus on the 125 incremental layouts performed
+  to opened the Twitter news feed,
+  load the default number of tweets,
+  and scroll down repeatedly to load more tweets.
+Twitter is a large web page,
+  with the tree growing to 3700 DOM nodes.
+This tree has a depth of 53,
+  a maximum child count of 128,
+  and some nodes having as many as 134 auxiliary nodes. 
+Considering all the frames in aggregate,
+  Twitter sees a mean speedup of $4.36\times$ 
+  over the Double Dirty Bit algorithm.
 
-Unlike \texttt{lobste.rs}, the Wikipedia page is a medium web page with 2300 dom nodes, too big to be displayed on the screen.%
-\footnote{A large page can goes above 10 thousands dom nodes.}
-Yet it is still unbalanced, with a depth of 23, a fanout of 51, and a max spine+1 of 119.
+Most of the 125 incremental layouts are small,
+  dirtying no more then 20 nodes (Figure~\ref{fig:case-study}).
+For these frames,
+  incremental layout spends most of its time
+  accessing auxiliary nodes.
+However, the largest incremental layout
+  dirties several hundred nodes.
+The 125 incremental layouts are triggered
+  by a variety of causes.
 
-The Wikipedia page run for a total of 25 frames. Of the 25 frames, 1 of them is an initial frame, which load up a empty page with 1 single dom node. \footnote{We observed a slowdown from ~350 cycles to ~1050 cycle on this frame} The full page is mostly subsequently loaded in 3 separate frames: one frame load the raw HTML and insert it into the empty root node, one frame load the CSS file, then apply styling, calculating the corresponding CSS properties for every nodes in the tree (thus changing all nodes), and one frame load up fonts files and change all text from the default fonts to them. Measuring only overhead times, we observed a slowdown of Spineless Traversal over Double Dirty Bit on all 3 frames: The page load went from taking 344k cycles to 987k cycles; Loading fonts from 974k to 1045l, and Loading CSS from 1873k to 2593k. Of the reamining 21 frames, 7 of them are region loading, where 
+\begin{figure}
+\begin{subfigure}{0.48\linewidth}
+    \includesvg[width=\linewidth]{CaseStudy.svg}
+    \caption{The numbers of nodes changed externally for each frame, for Twitter. Most frames are very incremental, with 79 frames changing no more than 20 nodes in the tree. However there are some very large changes caused by content insertion/removal, with the largest change being 787 nodes in a single frame.}
+    \label{fig:case-study}
+\end{subfigure}\hfill%
+\begin{subfigure}{0.48\linewidth}
+    \includesvg[width=\linewidth]{CaseStudyOverhead.svg}
+    \caption{The overhead scatter plot of Spineless Traversal compared to Double Dirty Bit for Twitter. Most points are below the $y=x$ line, indicating a speedup. Moreover, there are many points providing large speedup of over an order of magnitude.}
+\end{subfigure}
+\end{figure}
+
+\paragraph{Linked Files}
+Many layouts are triggered when linked files---%
+  JavaScript, CSS, images, and videos---%
+  finish loading.
+Loading JavaScript might add
+  new \texttt{<script>} and \texttt{<style>} elements to the page,
+  while loading CSS can affect the CSS properties
+  of existing elements.
+Loading images and videos, meanwhile,
+  changes inherent width and height attributes
+  (from 0 to the actual image width/height)
+  used to compute a layout node's intrinsic size.
+Typically only one or a few nodes are dirtied,
+  but these nodes have many auxiliary nodes.
+Most image and video nodes, for example
+  are located deep in the layout tree,
+  while \texttt{<script>} and \texttt{<style>} nodes
+  are close to the root but have a huge number of siblings.
+Spineless Traversal thus dramatically speeds up
+  these incremental layouts,
+  by up to $100\times$ in extreme cases.
+ 
+\paragraph{Lazy Loading}
+Twitter uses a lazy-loading technique
+  which first loads a ``shell'' page
+  and then gradually adds more and more elements to the shell
+  as more content is loaded over the network.
+For example, the header bar, side bar, ads, and tweets
+  all load in separate frames and thus require
+  separate incremental layouts.
+Scrolling causes yet more content (tweets and ads) to load.
+These frames, typically insert a single large subtree.
+Despite the bulk insertion optimizations
+  described in Section~\ref{sec:tree-insertion},
+  these are still difficult for Spineless Traversal
+  because it must create a large number of new OM objects
+  and then rebalance the OM data structure.
+Spineless Traversal is thus slower than Double Dirty Bit on these frames,
+  typically by about $2\times$.
+However, note that the latency in this case is partially hidden
+  by the network latency of loading the content in the first place,
+  so the slowdown here is likely less critical than for other frames.
+
+\paragraph{Removal}
+The Twitter application also occasionally removes
+  remove parts of the page that are no longer visible to the user.
+For example, offscreen content is sometimes removed;
+  Spineless Traversal handles these removals
+  much faster than Double Dirty Bit,
+  often by $10\times$ or more,
+  since Twitter is removing exactly those elements
+  that do not affect what the user sees on the screen.
+Twitter also sometimes removes
+  individual \texttt{<script>} and \texttt{<style>} elements
+  that don't affect the page;
+  here Spineless Traversal's speedup
+  is smaller, approximately $2\times$,
+  as multiple \texttt{<script>}/\texttt{<style>} are removed at once,
+  amortizing cost of accessing auxiliary nodes in Double Dirty Bit. 
+
+Moreover, some frames mix file loading, lazy loading, and removals,
+  simply due to whether these occur in the same or different frames;
+  in this case the time taken for Spineless Traversal 
+  basically sums over the time for each individual change,
+  while Double Dirty Bit can amortize the cost
+  of traversing auxiliary nodes.
+As a result, these mixed frames typically see smaller speedups;
+  however, these frames are still typically small
+  (often many images loading at once)
+  so Spineless Traversal still sees a significant speedup.

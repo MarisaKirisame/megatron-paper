@@ -3,7 +3,7 @@
 To evaluate Spineless Traversal,
   we implement it for a simplified web layout algorithm
   implemented in the DSL of Figure~\ref{fig:dsl}
-  and compiled by a compile we call MegaTron.
+  and compiled by a compiler we call Megatron.
 In this section, we first describe
   the layout modes implemented,
   then how we compile the DSL to a layout engine,
@@ -30,20 +30,20 @@ However, we took care to implement several features
   with complex invalidation behavior,
   including intrinsic width, flex-box layout, and positioning.
 In total, our implementation is 700 lines of code
-  in a custom DSL called Megatron,
-  which compute approximately 50 fields for each layout node.
+  in the custom DSL,
+  which computes approximately 50 fields for each layout node.
 The remainder of this section describes
   several key layout features implemented in our layout algorithm.
 
 \paragraph{Box model}
-Each layout node has an $x$, $y$, width and height field.
+Each layout node has an $x$, $y$, \texttt{width} and \texttt{height} field.
 Typically the rectangle this represents contains
     all of the node's children, while sibling elements
     don't overlap.
 In general, width is computed top-down
-  (children's width depend on parent's width),
+  (children's width depends on parent's width),
   height is computed bottom-up
-  (parent's height is sum of children's heights)
+  (parent's height is the sum of children's heights)
   and $x$ and $y$ are computed in-order.
 This forms long dependency chains between elements,
     where updating one element can cause many others
@@ -75,9 +75,9 @@ Additionally, our layout algorithm
   allows different lines to have different height
   (based on the height of the largest layout node in the line),
   which introduces a field (line height)
-  that is dependent on may different nodes (each word in the line).
+  that is dependent on many different nodes (each word in the line).
 This has a number of interesting effects for invalidation.
-For example, adding a node node to a line
+For example, adding a node to a line
   may cause no change if it is not the tallest node in the line.
 However, if the new node is now the tallest node,
   that may cause the line to become taller,
@@ -97,12 +97,9 @@ Changing a layout node's \texttt{display} property
   pop-ups, and other elements that appear and disappear,
   such as the ``preview'' hover effects on Wikipedia.
 Importantly,
-  changes to \texttt{display: none} nodes
+  inserting a \texttt{<script>} or \texttt{<style>},
+  which are \texttt{display: none},
   should not invalidate any other nodes and should be fast.
-On the other hand, a node switching
-  from \texttt{display: none} to \texttt{display: block}
-  effectively adds a subtree to the layout tree,
-  which is handled specially in Spineless Traversal.
   
 \paragraph{Position}
 An element with \texttt{position: absolute}
@@ -168,11 +165,8 @@ Finally, a variety of minor tweaks
 
 \subsection{Compiler}
 \label{sec-compiler}
-
-\todo{Talk about spineless tagless}
-
-This layout algorithm is implemented in the Megatron DSL
-  and then compiled to C++ to maximize performance.
+This layout algorithm is implemented in the DSL
+  and then compiled to C++ to maximize performance.\footnote{It was initially an interpreter. Thanks to Final Tagless\cite{FTG}, the transition from interpreter to compiler was smooth.}
 Passes are compiled to three C++ functions:
   the pass itself,
   a function that performs just the pre-order assignments
@@ -197,7 +191,7 @@ Discriminated unions are used for fields with units.
 The bottom line is that the compiled code is
   long but readable, idiomatic, and performant C++ code
   with no allocation, hash, or string operations.
-This is critical, because it means that,
+This is critical because it means that,
   like in a real web browser,
   computing fields is very fast
   and the cache misses from finding dirty fields
@@ -211,11 +205,11 @@ Specifically, the compiler examines
   to compute each field,
   and computes the inverse neighbor relation.
 Every field assignment
-  compares the new and old value in the field
-  and sets dirty bits only if the new and old value differ.
+  compares the new and old values in the field
+  and sets dirty bits only if the new and old values differ.
 The actual invalidation traversal algorithm
   (Double Dirty Bit or Spineless)
-  is encapsulated in an global value
+  is encapsulated in a global value
   that provides a method to dirty a node/field
   and an iterator over all dirty nodes.
 The incremental layout entry point function

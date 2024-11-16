@@ -1,20 +1,24 @@
 \section{Spineless Traversal}
 
-Spineless traversal is a new algorithm
-  for finding the dirty nodes in the layout tree.
-At its core, spineless traversal recognizes
-  that the main cost of the Double Dirty Bit algorithm
-  is cache misses due to too many auxiliary nodes.
-It therefore uses a more computationally-heavy approach
-  to jump directly to dirty nodes instead of traversing the tree;
-  this trades more computation for fewer cache misses
-  and thus results in greater performance.
+Spineless Traversal is such an algorithm.
+Unlike Double Dirty Bit,
+  Spineless Traversal can jump directly to the next dirty node
+  without accessing any auxiliary nodes;
+  as a result, it suffers dramatically fewer cache misses
+  than Double Dirty Bit.
+Achieving this requires a more computationally-heavy approach,
+  storing all dirty nodes in a priority queue
+  and maintaining the correct traversal order
+  using an order maintenance data structure.
+Spineless Traversal's savings in cache misses
+  outweigh the greater computational requirements
+  of these data structures.
 
 \subsection{The Priority Queue}
 
 Spineless traversal is conceptually simple.
 Each node field in the layout tree is assigned a label,
-  indicating its position in the trace of a non-incremental layout.
+  indicating its position in a layout trace.
 Node fields are placed in a priority queue when dirtied,
   with the label used as their priority.
 To perform an incremental layout,
@@ -22,86 +26,32 @@ To perform an incremental layout,
   with dependent fields
   added back to the priority queue as they get dirtied,
   until the priority queue is empty.
-Because the priority queue pops smaller node field labels first,
-  a spineless traversal visits node fields in order
-  and thus respects the dependency order of layout.
-
-Since only dirty nodes are even pushed or popped from the priority queue,
+Because the priority queue pops node fields with smaller labels first,
+  Spineless Traversal respects the dependency order of layout.
+Since only dirty nodes are ever pushed or popped from the priority queue,
   no auxiliary nodes are accessed.
-This means that spineless traversal has the potential
-  to dramatically speed up traversal,
-  assuming the priority queue operations themselves
-  don't add too much overhead.
+
 We use a min-heap for our priority queue,
   which is cache-friendly and requires relatively few operations
   for each push and pop.
 Moreover, the queue is typically small:
   while there are typically thousands of nodes,
   with each node having approximately 50 fields,
-  the priority queue typically contains less then 1000 elements,
+  the priority queue typically contains less than 1000 fields,
   and for the most latency-critical interactions,
-  like hovers or drags, it can contain 100 elements or fewer.
+  like hovers or drags, it can contain 100 or fewer.
 With such a small size, a priority queue push/pop requires
-  10--20 label comparisons,
+  5--10 label comparisons,
   which can be performed in roughly the time
-  for one or two L3 cache accesses
+  for one or two L2 cache misses
   in our optimized implementation.
-
-
-\begin{figure}
-\scalebox{0.7}{
-\begin{forest}
-  [body 
-    [header [a] [div [nav [a] [a] [a] [a] [a]] [nav [a]]]]
-    [div 
-      [ol 
-        [li 
-          [div 
-            [div [a] [div]] 
-            [div 
-              [span [a]] 
-              [span [a] [a]]
-              [a]
-              [div 
-                [a [img]] 
-                [span]
-                [a]
-                [span]
-                [span]
-                [span [input] [label [div [a] [a, color=green, name=popped] [a, color=orange, name=pushed]]]] 
-                [span [span] [a]]]]]]
-        [a [span]]]
-    [div]
-    [ol
-      [li
-        [div
-          [form
-            [input]
-            [input, color=yellow]
-            [input
-              [div
-                [textarea
-                  [p]
-                  [div
-                    [input] [button] [div]]]]
-              [p]]]]]
-      [li]]]
-    [footer [a] [a] [a] [a]]
-    [span]]
-\draw[] (1,-11) rectangle (2,-12) node[pos=.5, color=green] {a};
-\draw[->] (1.5, -11) to (popped);
-\draw[] (2,-11) rectangle (3,-12) node[pos=.5, color=yellow] {input}; \draw[<-] (2, -11) to (pushed);
-\end{forest}
-}
-\centering
-\caption{Spineless Traversal instead store all elements in a priority queue, eschewing the need to traverse spine+1. The queue initially contain the green "a" and the yellow "input" node. In a single iteration, spineless traversal pop the green "a" off the queue and process it, which push the orange "a" into the queue, and it is inserted before the yellow "input" to respect the time order.}
-% https://lobste.rs/s/7ixd88/c_complexity_compiler_bugs
-\label{fig:dom-tree-pq}
-\end{figure}
+Since there are typically \emph{far} more auxiliary than dirty nodes,
+  this means Spineless Traversal performs much faster
+  than Double Dirty Bit.
 
 \subsection{Order Maintenance}
 
-The labels themselves, however, are challenging to maintain.
+The key to Spineless Traversal is maintaining the labels.
 The issue is that layout nodes are added and removed over time;
   labels need to be comparable,
   but it also needs to be possible
@@ -109,59 +59,60 @@ The issue is that layout nodes are added and removed over time;
   arbitrarily.
 Following SAC~\cite{SAC},
   spineless traversal achieves this using
-  the \emph{order maintenance} data structure.
+  an \emph{order maintenance} data structure.
 First introduced by \citet{OM},
   order maintenance is a data structure
   that maintains a totally ordered set of objects
   while allowing objects
   to be added and removed from the order arbitrarily.
-One can imagine order maintenance as a doubly-linked list,
-  where nodes can be added and removed in $O(1)$ time;
-  however, unlike a simple double-linked list,
-  order maintenance also permits an $O(1)$ order comparison function.
+Crucially, both adding/removing and comparing nodes
+  takes $O(1)$ time.
 Abstractly, order maintenance provides the following API:
 
 \begin{enumerate}
 \setlength{\itemindent}{8em}
   
 \item[$\mathsf{Compare}(p, q)$] Decides whether $p$ or $q$ comes first in the order (or are equal).
-\item[$\mathsf{Head}()$] Returns the first object of the list.
+\item[$\mathsf{Head}()$] Returns the first object of the order.
 \item[$\mathsf{Create}(p)$] Creates and returns a new object right after $p$.
 \end{enumerate}
 
 \noindent
 Deleting OM objects is also possible; however,
-  our implementation does not use this method.
-\todo{Maybe try implementing it}
+  our implementation does not.
 
 Our implementation is based on that by \citet{SOM},
-  % two simplified algorithm for linked list
   which uses a two-level structure with
   a double-linked list of double-linked lists.
-Objects are represented by nodes in the lower-level lists;
-  the total order can be recovered by flattening this structure,
-  concatenating all lower-level lists
+Objects are represented by nodes in the lower-level lists.
+Both levels are ordered;
+  the total order traverses lower-level lists in order,
   in the order dictated by the higher-level list.
 Each object (node in the lower-level list)
   maintains a pointer to its higher-level list cell;
   two objects are in the same low-level list
   if they have the same higher-level pointer.
-Comparing two objects then has two cases:
-  the two objects can be in the same low-level list,
-  or in different ones.
 To allow fast comparisons between nodes,
   both low-level and high-level list cells store
   an unsigned integer of fixed size
-  (in our implementation, unsigned 32-bit integers)
+  (in our implementation, 32~bits)
   called labels.
-Within a lower-level list,
-  node labels are strictly increasing,
-  making comparison fast.
-Higher-level lists have the same invariant.
+Within both lists, node labels are strictly increasing;
+  this makes comparisons fast.
+Specifically, comparison has two cases:
+  the two objects can be in the same low-level list,
+  in which case their labels can be compared,
+  or in different ones, in which case
+  their parents' labels can be compared.
+This comparison operation is
+  the bulk of the Spineless Traversal time
+  so its simplicity is essential;
+  Section~\ref{sec:opt} discusses how we
+  micro-optimize it in our implementation.
 
 To create an object inside an order maintenance structure,
   a new lower-level list cell is created
-  whose label is the average of the two neighboring labels.
+  whose label is the average of the two neighboring labels.%
 \footnote{
   When creating a node after the last node,
   the maximum representable number is used as the larger number.
@@ -170,9 +121,10 @@ If the two labels differ by exactly 1, however,
   this becomes impossible (a label would be repeated).
 In this case, the data structure re-balances itself,
   evenly reassigning labels to existing objects.
-During relabeling, a new higher-level list cell might be created,
-  and the lower-level list may be split in two,
-  ensuring a sufficiently-large gap the elements.
+This process might
+  create a new higher-level list cell
+  to split a lower-level list in two,
+  ensuring a sufficiently large gap between its cells.
 Rebalancing is algorithmically tricky
   but is not a significant time sink in our use case,
   so we do not detail re-balancing here;
@@ -180,27 +132,27 @@ Rebalancing is algorithmically tricky
 
 \begin{figure}
 \begin{tikzpicture}
-\draw[blue, very thick] (0,0) rectangle (2,1);
-\draw[ultra thick, <->] (2,0.5) -- (6,0.5);
-\draw[blue, very thick] (6,0) rectangle (8,1);
+\draw[blue, very thick] (1.5,0) rectangle (3.5,1);
+\draw[ultra thick, <->] (3.5,0.5) -- (7.5,0.5);
+\draw[blue, very thick] (7.5,0) rectangle (9.5,1);
 
 \draw[orange, very thick] (0, -2) rectangle (1,-1);
-\draw[very thick, <->] (0.5,-1) -- (0.5,0);
+\draw[very thick, <->] (0.5,-1) -- (2,0);
 \draw[very thick, <->] (1,-1.5) -- (2,-1.5);
 \draw[orange, very thick] (2, -2) rectangle (3,-1);
-\draw[very thick, ->] (2.5,-1) -- (1,0);
+\draw[very thick, ->] (2.5,-1) -- (2.5,0);
 \draw[very thick, <->] (3,-1.5) -- (4,-1.5);
 \draw[orange, very thick] (4, -2) rectangle (5,-1);
-\draw[very thick, ->] (4.5,-1) -- (1.5,0);
+\draw[very thick, ->] (4.5,-1) -- (3,0);
 
 \draw[orange, very thick] (6, -2) rectangle (7,-1);
-\draw[very thick, <->] (6.5,-1) -- (6.5,0);
+\draw[very thick, <->] (6.5,-1) -- (8,0);
 \draw[very thick, <->] (7,-1.5) -- (8,-1.5);
 \draw[orange, very thick] (8,-2) rectangle (9,-1);
-\draw[very thick, ->] (8.5,-1) -- (7,0);
+\draw[very thick, ->] (8.5,-1) -- (8.5,0);
 \draw[very thick, <->] (9,-1.5) -- (10,-1.5);
 \draw[orange, very thick] (10, -2) rectangle (11,-1);
-\draw[very thick, ->] (10.5,-1) -- (7.5,0);
+\draw[very thick, ->] (10.5,-1) -- (9,0);
 
 \end{tikzpicture}
 \caption{An Order Maintenance data structure. The blue node represent the higher level doubly linked list, and each node store a lower level doubly linked list, denoted by the red node. Lower level node also store a pointer to the higher level node. Each node additionally hold an unsigned integer, label, such that inside a single list the node earlier have a strictly smaller label then the node later.}
@@ -208,55 +160,82 @@ Rebalancing is algorithmically tricky
 \end{figure}
 
 \subsection{Bulk insertion and deletion}
-Special care has to be taken to handle insertion or deletion
-  of whole subtrees at a time;
-  this is common in modern JavaScript applications built
-  using ``virtual DOM'' frameworks such as JavaScript.
 
-When the user interact with the webpage, the underlying javascript might decide to insert or delete a subtree. This subtree is then translated into a layout tree.
-Inserting and deleting layout nodes
-  ultimately requires creating and deleting
-  order maintenance objects,
-  but special care has to be taken to
-  deal efficiently with subtrees.
-\todo{Dependency: need to clarify that whole subtrees are inserted/deleted.}
+\label{sec:tree-insertion}
+Bulk insertions into the layout tree are common,
+  often due to a ``lazy loading'' pattern:
+  a ``shell'' web page loads first and shows a loading indicator;
+  then the ``content'' loads and is inserted into the page
+  as a single large subtree.
+This pattern is encouraged by frameworks like React,
+  and can occur in several stages, with a ``shell''
+  first inserting ``subshells'' which
+  themselves load subcomponents in turn.
+Efficiently inserting the large subtree
+  requires special care in Spineless Traversal.
 
-When a subtree rooted at $r$ is inserted,
-  the pair $(r, v)$ is pushed into the priority queue
-  for each variable $v$ in the layout program.
-The position of this pair must match
-  its position in a trace of the layout program.
-That is, it must come after $(n', v')$
-  computed before $r.v$
-  and before any $(n'', v'')$ computed after $r.v$.
-To do so,
-  spineless traversal creates a new order maintenance object
-  after the last field, according to the order maintenance,
-  in either the previous sibling or parent node of the new subtree.
-Note that only the root of the inserted subtree
-  needs to be pushed into the priority queue.
-This is because, after visiting the root,
-  the layout program will proceed to visit all its children,
-  and so on recursively until the whole subtree has been visited.
+The basic issue is that all fields of all nodes in the subtree
+  need to have them and their OM objects initialized,
+  yet we also want subtree insertion to be fast.
+Our solution adds these ``initialization passes''
+  as special elements in the priority queue.%
 \footnote{
-  As a further edge case,
-    it is possible that the subtree is inserted into
+  Just enqueueing all fields of all nodes in the subtree
+    is not a good idea---it will create a large queue with slow queue operations.
+  In our experiments, this often took the queue
+    from tens to thousands of members,
+    leading to a small integer slowdown.
+}
+In other words, the priority queue can contain
+  not only $(n, v)$ pairs for a dirtied field
+  but also $(r, p)$ fields pointing to the root $r$
+  of an entire subtree that needs to be initialized
+  for pass $p$.
+When a subtree $T$ is inserted, each pass for it is enqueued;
+  the Order Maintenance object for that
+  is created after the OM of the last field
+  initialized by $P$ in $T$'s previous sibling or parent.
+In this way, we maintain the consistency of incremental layout 
+  with from-scratch layout.
+\footnote{
+  An edge case is inserting a subtree into
     a subtree that itself has not yet been laid out.
   In this case no further actions need to be taken,
-    since both subtrees would be initialized in one go.}
+    since both subtrees will be visited together.}
 
-Deleting a subtree is also challenging
-  because some nodes in the subtree may already be in the priority queue;
+When one of these $(r, p)$ elements is popped from the queue,
+  the pass $p$ is performed on the whole subtree under $r$,
+  creating all necessary order maintenance nodes.
+Since all fields in newly-created nodes are initially dirty,
+  performing this pass will not enqueue any fields
+  in the priority queue,
+  meaning that no priority queue operations
+  need to be performed.
+Likewise, since all data accesses are local,
+  no existing nodes will refer to any newly-inserted node
+  except the root node,
+  so no nodes need to be dirtied when running $p$ on the subtree.
+This means that, when initializing a subtree,
+  no priority queue operations or dirty bit propagations
+  need to be performed,
+  which makes subtree insertion faster.
+(However, order maintenance objects still need to be created,
+  meaning that, despite these optimizations,
+  Spineless Traversal is typically
+  slower than Double Dirty Bit
+  for subtree insertion.)
+
+When deleting a subtree,
+  some nodes in the subtree may
+  already be in the priority queue;
   for example, this can happen if
   a subtree is inserted and then later deleted.
 To avoid unnecessary recomputation,
   we add a ``deleted'' bit to each node
-  instead of deallocating it immediately.
-Recomputation is then skipped for deleted nodes,
-  and the nodes are actually deallocated
-  when a incremental layout is finished
+  and defer actual deallocation
+  until after incremental layout is performed
   and the priority queue is empty.%
-\footnote{Some browsers may choose
+\footnote{Some existing browsers choose
   to retain layout nodes even longer,
-  or even to garbage-collect them.
+  or even garbage-collect them.
 }

@@ -5,6 +5,85 @@
   publisher={Carnegie Mellon University}
 }
 
+@inproceedings{SACCost,
+  title={Self-adjusting computation: (an overview)},
+  author={Acar, Umut A},
+  booktitle={Proceedings of the 2009 ACM SIGPLAN workshop on Partial evaluation and program manipulation},
+  pages={1--6},
+  year={2009}
+}
+
+@inproceedings{PSAC,
+  title={Efficient parallel self-adjusting computation},
+  author={Anderson, Daniel and Blelloch, Guy E and Baweja, Anubhav and Acar, Umut A},
+  booktitle={Proceedings of the 33rd ACM Symposium on Parallelism in Algorithms and Architectures},
+  pages={59--70},
+  year={2021}
+}
+
+@inproceedings{SACTrace,
+author = {Acar, Umut A. and Blelloch, Guy and Ley-Wild, Ruy and Tangwongsan, Kanat and Turkoglu, Duru},
+title = {Traceable data types for self-adjusting computation},
+year = {2010},
+isbn = {9781450300193},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1806596.1806650},
+doi = {10.1145/1806596.1806650},
+abstract = {Self-adjusting computation provides an evaluation model where computations can respond automatically to modifications to their data by using a mechanism for propagating modifications through the computation. Current approaches to self-adjusting computation guarantee correctness by recording dependencies in a trace at the granularity of individual memory operations. Tracing at the granularity of memory operations, however, has some limitations: it can be asymptotically inefficient (eg, compared to optimal solutions) because it cannot take advantage of problem-specific structure, it requires keeping a large computation trace (often proportional to the runtime of the program on the current input), and it introduces moderately large constant factors in practice.In this paper, we extend dependence-tracing to work at the granularity of the query and update operations of arbitrary (abstract) data types, instead of just reads and writes on memory cells. This can significantly reduce the number of dependencies that need to be kept in the trace and followed during an update. We define an interface for supporting a traceable version of a data type, which reports the earliest query that depends on (is changed by) revising operations back in time, and implement several such structures, including priority queues, queues, dictionaries, and counters. We develop a semantics for tracing, extend an existing self-adjusting language, ΔML, and its implementation to support traceable data types, and present an experimental evaluation by considering a number of benchmarks. Our experiments show dramatic improvements on space and time, sometimes by as much as two orders of magnitude.},
+booktitle = {Proceedings of the 31st ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {483–496},
+numpages = {14},
+keywords = {traceable data types, self-adjusting computation},
+location = {Toronto, Ontario, Canada},
+series = {PLDI '10}
+}
+
+@inproceedings{Adapton,
+author = {Hammer, Matthew A. and Phang, Khoo Yit and Hicks, Michael and Foster, Jeffrey S.},
+title = {Adapton: composable, demand-driven incremental computation},
+year = {2014},
+isbn = {9781450327848},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2594291.2594324},
+doi = {10.1145/2594291.2594324},
+abstract = {Many researchers have proposed programming languages that support incremental computation (IC), which allows programs to be efficiently re-executed after a small change to the input. However, existing implementations of such languages have two important drawbacks. First, recomputation is oblivious to specific demands on the program output; that is, if a program input changes, all dependencies will be recomputed, even if an observer no longer requires certain outputs. Second, programs are made incremental as a unit, with little or no support for reusing results outside of their original context, e.g., when reordered.To address these problems, we present λiccdd, a core calculus that applies a demand-driven semantics to incremental computation, tracking changes in a hierarchical fashion in a novel demanded computation graph. λiccdd also formalizes an explicit separation between inner, incremental computations and outer observers. This combination ensures λiccdd programs only recompute computations as demanded by observers, and allows inner computations to be reused more liberally. We present Adapton, an OCaml library implementing λiccdd. We evaluated Adapton on a range of benchmarks, and found that it provides reliable speedups, and in many cases dramatically outperforms state-of-the-art IC approaches.},
+booktitle = {Proceedings of the 35th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {156–166},
+numpages = {11},
+keywords = {call-by-push-value (CBPV), demanded computation graph (DCG) incremental computation, laziness, self-adjusting computation, thunks},
+location = {Edinburgh, United Kingdom},
+series = {PLDI '14}
+}
+
+@inproceedings{AdaptonName,
+  title={Incremental computation with names},
+  author={Hammer, Matthew A and Dunfield, Jana and Headley, Kyle and Labich, Nicholas and Foster, Jeffrey S and Hicks, Michael and Van Horn, David},
+  booktitle={Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
+  pages={748--766},
+  year={2015}
+}
+
+@inproceedings{ICC,
+  title={Incremental computation via function caching},
+  author={Pugh, William and Teitelbaum, Tim},
+  booktitle={Proceedings of the 16th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+  pages={315--328},
+  year={1989}
+}
+
+@inproceedings{DDF,
+author = {McSherry, Frank and Murray, Derek and Isaacs, Rebecca and Isard, Michael},
+title = {Differential dataflow},
+booktitle = {Proceedings of CIDR 2013},
+year = {2013},
+month = {January},
+abstract = {Existing computational models for processing continuously changing input data are unable to efficiently support iterative queries except in limited special cases. This makes it difficult to perform complex tasks, such as social-graph analysis on changing data at interactive timescales, which would greatly benefit those analyzing the behavior of services like Twitter. In this paper we introduce a new model called differential computation, which extends traditional incremental computation to allow arbitrarily nested iteration, and explain---with reference to a publicly available prototype system called Naiad---how differential computation can be efficiently implemented in the context of a declarative data-parallel dataflow language. The resulting system makes it easy to program previously intractable algorithms such as incrementally updated strongly connected components, and integrate them with data transformation operations to obtain practically relevant insights from real data streams.},
+url = {https://www.microsoft.com/en-us/research/publication/differential-dataflow/},
+edition = {Proceedings of CIDR 2013},
+}
+
 @inproceedings{yufeng-1,
   title={Tree traversal synthesis using domain-specific symbolic compilation},
   author={Chen, Yanju and Liu, Junrui and Feng, Yu and Bodik, Rastislav},
@@ -23,7 +102,7 @@
   year={2023},
   publisher={ACM New York, NY, USA}
 }
-@inproceedings{TR,
+@inproceedings{TR1,
     author = {Reps, Thomas},
     title = {Optimal-time incremental semantic analysis for syntax-directed editors},
     year = {1982},
@@ -38,6 +117,33 @@
     numpages = {8},
     location = {Albuquerque, New Mexico},
     series = {POPL '82}
+}
+
+@inproceedings{TR2,
+author = {Reps, Thomas W. and Marceau, Carla and Teitelbaum, Tim},
+title = {Remote attribute updating for language-based editors},
+year = {1986},
+isbn = {9781450373470},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/512644.512645},
+doi = {10.1145/512644.512645},
+abstract = {A major drawback to the use of attribute grammars in language-based editors has been that attributes can only depend on neighboring attributes in a program's syntax tree. This paper concerns new attribute-grammar-based methods that, for a suitable class of grammars, overcome this fundamental limitation. The techniques presented allow the updating algorithm to skip over arbitrarily large sections of the tree that more straightforward updating methods visit node by node. These techniques are then extended to deal with aggregate values, so that the attribute updating procedure need only follow dependencies due to a changed component of an aggregate value. Although our methods work only for a restricted class of attribute grammars, satisfying the necessary restrictions should not place an undue burden on the writer of the grammar.},
+booktitle = {Proceedings of the 13th ACM SIGACT-SIGPLAN Symposium on Principles of Programming Languages},
+pages = {1–13},
+numpages = {13},
+location = {St. Petersburg Beach, Florida},
+series = {POPL '86}
+}
+
+@article{MEMO,
+  title={“Memo” Functions and Machine Learning},
+  author={Donald Michie},
+  journal={Nature},
+  year={1968},
+  volume={218},
+  pages={19-22},
+  url={https://api.semanticscholar.org/CorpusID:4265138}
 }
 
 @book{LM,
@@ -99,7 +205,6 @@
 	author = {Tali Garseil},
 	title = {{H}ow browsers work --- taligarsiel.com},
 	howpublished = {\url{https://taligarsiel.com/Projects/howbrowserswork1.htm##Dirty_bit_system}},
-	year = {},
 	note = {[Accessed 05-11-2024]},
 }
 
@@ -107,7 +212,6 @@
 	author = {Chrome Team},
 	title = {{A}void an excessive {D}{O}{M} size | {L}ighthouse | {C}hrome for {D}evelopers --- developer.chrome.com},
 	howpublished = {\url{https://developer.chrome.com/docs/lighthouse/performance/dom-size}},
-	year = {},
 	note = {[Accessed 05-11-2024]},
 }
 
@@ -154,4 +258,65 @@
   pages={348--375},
   year={1978},
   publisher={Elsevier}
+}
+
+@misc{css,
+	author = {CSS Working Group},
+	title = {{A}ll {C}{S}{S} specifications --- w3.org},
+	howpublished = {\url{https://www.w3.org/Style/CSS/specs.en.html}},
+	note = {[Accessed 14-11-2024]},
+}
+
+@InProceedings{FTG,
+author="Carette, Jacques
+and Kiselyov, Oleg
+and Shan, Chung-chieh",
+editor="Shao, Zhong",
+title="Finally Tagless, Partially Evaluated",
+booktitle="Programming Languages and Systems",
+year="2007",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="222--238",
+abstract="We have built the first family of tagless interpretations for a higher-order typed object language in a typed metalanguage (Haskell or ML) that require no dependent types, generalized algebraic data types, or postprocessing to eliminate tags. The statically type-preserving interpretations include an evaluator, a compiler (or staged evaluator), a partial evaluator, and call-by-name and call-by-value CPS transformers.",
+isbn="978-3-540-76637-7"
+}
+
+@inproceedings{IC-Survey,
+author = {Liu, Yanhong A.},
+title = {Incremental Computation: What Is the Essence? (Invited Contribution)},
+year = {2024},
+isbn = {9798400704871},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3635800.3637447},
+doi = {10.1145/3635800.3637447},
+abstract = {Incremental computation aims to compute more efficiently on changed input  
+by reusing previously computed results.  
+We give a high-level overview of works on incremental computation,  
+and highlight the essence underlying all of them, which we call  
+incrementalization---the discrete counterpart of differentiation in calculus.  
+We review the gist of a systematic method for incrementalization,  
+and a systematic method centered around it, called  
+Iterate-Incrementalize-Implement,  
+for program design and optimization, as well as algorithm design and  
+optimization.  
+At a meta-level, with historical contexts and for future directions,  
+we stress the power of high-level data, control, and module abstractions  
+in developing new and better algorithms and programs as well as their precise  
+complexities.},
+booktitle = {Proceedings of the 2024 ACM SIGPLAN International Workshop on Partial Evaluation and Program Manipulation},
+pages = {39–52},
+numpages = {14},
+keywords = {Algorithm Design and Optimization, High-Level Abstractions, Incrementalization, Program Design and Optimization, ncremental Computation},
+location = {London, UK},
+series = {PEPM 2024}
+}
+
+@inproceedings{IC-bib,
+  title={A categorized bibliography on incremental computation},
+  author={Ramalingam, Ganesan and Reps, Thomas},
+  booktitle={Proceedings of the 20th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+  pages={502--510},
+  year={1993}
 }
