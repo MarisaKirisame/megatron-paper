@@ -452,6 +452,7 @@ def set_summary_bit(self):
 def find_dirty_nodes(self):
     if self.dirty:
         yield self
+        self.dirty = False
     if self.summary_bit:
         # Access auxiliary nodes
         for child in self.children:
