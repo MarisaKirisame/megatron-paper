@@ -72,7 +72,7 @@ def layout_simple(self):
   self.height_acc <-
     if prev?
     then prev.height_acc + self.height + 10 # margin
-    else 0
+    else self.height
 \end{verbatim}
 \caption{A layout algorithm that computes width and height of each dom node. The above program is a tree traversal: it walks down the tree then walks up the tree, computing values for each node during the walk.}
 \label{fig:layout-simple}
@@ -110,7 +110,7 @@ These properties are discussed in
   ~\cite{meyerovich-1,meyerovich-2,meyerovich-3,cassius-1,cassius-2,cassius-3,yufeng-1,yufeng-2}.
 
 In other words, layout can be expressed in the DSL
-  shown in Figure~\ref{fig:dsl}.
+  shown in Figure~\ref{fig:dsl}, which is essentially an Attribute Grammar with the evaluation order scheduled and fixed.
 In this DSL, a layout is defined by a set of passes
   $\text{Pass}_n$ performed in a certain order (the schedule).
 Each pass performs a recursive, in-order traversal of the tree,
@@ -159,6 +159,8 @@ In any case, prior work in similar DSLs%
   absolute positioning, flexible box layout,
   and line breaking are expressible in this DSL.
 
+\paragraph{Trace}
+\label{par:trace}
 A key property of a layout $L$
   is the order in which it computes
   different fields on different nodes in the tree.
@@ -169,17 +171,16 @@ Because our DSL only performs in-order traversals,
   the trace is structurally related to the tree shape:
   local changes to the tree (node insertions or deletions)
   imply a local change to the trace (subtrace insertion or deletion).
-This structural relationship means
-  that the ordering of any two $(n, v)$ pairs is fixed:
-  if $(n, v)$ appears before $(n', v')$,
-  this appear-before relationship
-  will be maintained even as new nodes are added or removed.% 
+This structural relationship means that the ordering of any two $(n, v)$ pairs is fixed:
+If $(n, v)$ appears before $(n', v')$,
+  this appear-before relationship will be maintained even as new nodes are added or removed.% 
 \footnote{
   We assume here that
     only brand-new nodes, not previously-removed ones,
     are inserted into the tree.
   To our knowledge, this is true of all major web rendering engines.
 }
+
 
 In the remainder of this paper,
   we will assume a correct implementation
@@ -377,13 +378,13 @@ Since all data accesses in our model are local,
   regardless of the size of the subtree.
 
 With dirty bit propagation implemented,
-  an incremental layout phase must simply 
-  find dirty fields (including transitively dirty fields),
-  and recomputing them in the scheduled order.
+  an incremental layout phase only need to 
+  find dirty fields (including transitively dirtied fields),
+  and recompute them in the scheduled order.
 We call a method for doing this an incremental traversal algorithm.
 A naive incremental traversal algorithm
   could simply traverse the entire layout tree, 
-  as if rerunning from scratch, only re-computed dirtied fields. 
+  as if rerunning from scratch, but only re-computing dirtied fields. 
 While this trivial invalidation algorithm
   respects the dependency order, clears all dirtied fields,
   and performs the minimal number of field computations,
@@ -465,11 +466,11 @@ def find_dirty_nodes(self):
 \end{figure}
 
 The Double Dirty Bit algorithm
-  reduces the number of auxiliary nodes,
+  reduces the amount of auxiliary nodes,
   greatly improving performance,
   and is considered the state of the art
   for layout invalidation traversal~\cite{tali-garseil,wbe}.
-The number of auxiliary nodes is still large.
+However, the amount of auxiliary nodes is still large.
 To reach any dirty node,
   the Double Dirty Bit traversal must
   must traverse the path from the root of the tree

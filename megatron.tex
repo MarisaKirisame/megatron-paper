@@ -86,7 +86,7 @@ However, if the new node is now the tallest node,
 
 \paragraph{Display}
 Nodes have a \texttt{display} property that changes
-  whether they act line words (\texttt{inline})
+  whether they act like line words (\texttt{inline})
   or paragraphs (\texttt{block}).
 The \texttt{display} property can also be set to \texttt{none},
   in which case the layout nodes are not shown on the page
@@ -209,9 +209,14 @@ Every field assignment
   and sets dirty bits only if the new and old values differ.
 The actual invalidation traversal algorithm
   (Double Dirty Bit or Spineless)
-  is encapsulated in a global value
+  is encapsulated in a global variable in the compiler,
   that provides a method to dirty a node/field
-  and an iterator over all dirty nodes.
+  and an iterator over all dirty nodes, 
+  allowing the compiler to abstract over the two implementation.
+It is crucial that this abstraction live in the compiler,
+  and not in the generated code, 
+  which have the invalidation traversal algorithm inlined,
+  to avoid introducing unnecessary overhead.
 The incremental layout entry point function
   iterates over all dirty nodes
   and calls the relevant pass functions.
