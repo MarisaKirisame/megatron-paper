@@ -4,13 +4,9 @@
 By avoiding auxiliary node accesses,
   Spineless Traversal can be
   dramatically faster than Double Dirty Bit
-  in some cases.
-However, to make Spineless Traversal competitive
-  on arbitrary real-world web pages,
-  the computationally expensive steps in spineless traversal
-  have to be meticulously optimized
-  to avoid allocation, reduce memory traffic,
-  and optimize branch mispredictions.
+  in certain cases.
+Moreover, the extensive use of nontrivial data structure in Spineless Traversal
+  introduces multiple optimization opportunities, which can avoid allocation, reduce memory traffic, and alleviate branch mispredictions.
 
 \subsection{Pointer Compression and Custom Allocator}
 Order maintenance objects have to be allocated every time
@@ -43,11 +39,8 @@ In our implementation, we use 32-bit pointers;
   of an order maintenance object 128 bits,
   meaning that it exactly fits in each cache line,
   with no order maintenance objects split across two.
-By contrast, an experiment with 16-bit pointers
-  actually increased runtime---because, we suspect,
-  some order maintenance objects
-  split across two cache lines,
-  which introduced additional stalls.
+\footnote{By contrast, an experiment with 16-bit pointers
+  actually increased runtime.}
 
 The actual implementation of \texttt{OMPool} is standard;
   it stores a \texttt{pool} of memory as a \texttt{std::vector},
@@ -188,11 +181,13 @@ Spineless Traversal can be applied to any field packing,
 
 Recall that priority queue entries
   refer to either a subtree or a node,
-  and also name a phase plus pre/post location.
-We combine the subtree-or-node bit with the phase and pre/post location
+  and also name a pass, plus (in the case of a node) a bit to indicate whether 
+  the dirtied fields are the pre-order-computed fields,
+  or the post-order-computed fields.
+We combine the subtree-or-node bit with the phase and pre/post fields bit
   into a simple enum, which we store in a byte.
-We use the enum as an index into a jump table,
-  which allows us to efficiently execute the field recomputation
+We then use the enum as an index into a jump table,
+  which allows us to efficiently execute the recomputation
   that corresponds to a single priority queue entry.
 
 \subsection{Attempted, Failed Optimizations}
@@ -205,17 +200,16 @@ A number of attempted optimizations
     but the priority queue for more distant jumps.
   We were unable to make switching between the two modes
     efficient enough to be competitive.
-\item A splay tree instead of a min-heap to improve priority queue locality.
+\item A splay tree instead of a min-heap to exploit insertion pattern.
   Resulted in a slowdown.
 \item A red-black tree instead of a min-heap for the priority queue.
   Resulted in a slowdown.
-\item 1-based array indices in the min-heap,
-  which need fewer addressing instruction.
+\item 1-based array in the min-heap, to speedup index manipulation.
   Resulted in a slowdown.
-\item 16-bit \texttt{OMPool} pointers, and 16-bit OM labels.
+\item 16-bit \texttt{OMPool} pointers/OM labels.
   No faster than 32 bits, and more rebalancings needed.
-\item Pointer tagging---reduce priority queue node size
-  by moving boolean bits into pointers. No faster.
+\item Reduce priority queue node size
+  by pointer tagging. No faster.
 \item Splitting OM \texttt{left}/\texttt{right} pointers
   from the \texttt{label} and \texttt{parent}/\texttt{children} pointers, to improve cache locality. Did not see improvement.
 \item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. Did not see improvement.

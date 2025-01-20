@@ -58,7 +58,7 @@ While this reduces the search time,
 This means it must access not only the actually-dirty nodes
   but many extra ``auxiliary nodes``:
   the root node, every node between it and a dirty node,
-  and any node adjacent to that path.
+  and all children of that path.
 On large pages, there can be far more auxiliary nodes
   than actually-dirty nodes,
   especially for the most latency-sensitive interactions.
