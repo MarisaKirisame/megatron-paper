@@ -1,12 +1,12 @@
 \section{Related Work}
 
 \paragraph{Incremental Computation}
-Incremental computation---%
-  speeding up computations by reusing previously-computed results---%
+Speeding up computations
+  by reusing previously-computed results
   is a long-studied topic in computer science broadly~\cite{memo}
   and programming language theory in particular;
   \citet{IC-Survey} and \citet{IC-bib}
-  give thorough surveys of the fielld.
+  give thorough surveys of the field.
 The recent Self-Adjusting Computation (SAC)~\cite{SAC} framework
   proposes incrementalizing arbitrary computations,
   including a cost semantics~\cite{SACCost},
@@ -17,52 +17,50 @@ The Adapton framework~\cite{Adapton}
   and allows manually-specified annotations~\citet{AdaptonName}
   for greater reuse.
 While this prior work focuses on general-purpose computations,
-  Spineless Traversal is focused on a particularly-critical application
-  of incremental computation: web browsers.
+  Spineless Traversal is focused on a particularly critical application: web browser layout.
 This application-specific focus has precedent:
   \citet{ICC} speed up memoization for functional programs over lists
   using ``chunky decomposition'',
   while differential dataflow databases~\cite{DDF}
-  incrementalize Relational Algebra computations
-  and have achieved some prominence in industry.
+  that incrementalize relational algebra
+  are prominent in industry.
 
-\citet{TR1} is the earliest work
-  on incremental evaluation of attribute grammar,
+\citet{TR1} wrote the earliest work
+  on incremental evaluation of attribute grammars,
   motivated by syntax-directed editors;
-Later work~\cite{TR2} allows reference to non-neighbor attributes.
+  later work~\cite{TR2} allows references
+  to non-neighbor attributes.
 However, these early papers require recomputation
   immediately after every tree change,
   whereas web browsers, our target application,
-  batch updates to perform incremental computation
-  only once per frame.
+  batch multiple updates
+  and perform layout only once per frame.
 The standard in web browsers is instead
   the Double Dirty Bit algorithm,
   implemented in all existing web rendering engines.
-\citet{tali-garseil} describes the Double Dirty Bit algorithm
-  in industry publication \texttt{web.dev},
-  and it also features in textbooks~\cite{wbe}.
+Industry publication \texttt{web.dev}
+  ran an article on Double Dirty Bit~\cite{tali-garseil},
+  and the algorithm also features in textbooks~\cite{wbe}.
   
 The formal methods community has put significant effort
   into formalizing web page layout.
 \citet{meyerovich-1} proposed using attribute grammars,
-  similar to the DSL in Figure~\ref{fig:dsl},
+  similar to the DSL in \Cref{fig:dsl},
   for formalizing web-like layout rules.
 Later work~\cite{yufeng-1} proposes
   synthesizing schedules from the attribute grammar rules,
   including proposals~\cite{meyerovich-2,meyerovich-3}
   to use parallel schedules to further improve layout performance.
-Parallel schedules could be combined with Spineless Traversal
-  to reduce latency even further.
 The Cassius project~\cite{cassius-1}
-  later formalized a significant fragment of CSS~2.1
+  formalized a significant fragment of CSS~2.1
   using an attribute-grammar-like formalism.
 Our layout implementation is based on Cassius.
 Later work~\cite{cassius-2} also proposed
   using the Cassius formalism to verify web page layouts,
-  including in a modular way~\cite{cassius-3}.
-However, none of these works investigated incremental layout.
-By contrast, the MEDEA project~\cite{yufeng-2}
+  including in a custom proof assistant~\cite{cassius-3}.
+However, none of these works investigate incremental layout.
+By contrast, the \textsc{Medea} project~\cite{yufeng-2}
   proposed synthesizing incremental layout algorithms
-  by automatically synthesizing dirty bit propogation code.
-Our work extends MEDEA by exploring
+  by automatically synthesizing dirty bit propagation code.
+Our work extends \textsc{Medea} by exploring
   optimized incremental traversal algorithms.

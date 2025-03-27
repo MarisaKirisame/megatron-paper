@@ -1,0 +1,193 @@
+\section{Incremental Layout}
+
+An \emph{incremental} layout algorithm reuses
+  layout field values between layouts
+  as the layout tree is modified by the application code.
+For example, when the user moves their mouse,
+  a tooltip may need to move to follow the cursor;
+  incremental layout would change the position of the tooltip
+  while reusing all other layout fields for all other elements.
+Most layouts change only a small fraction of fields,
+  especially the most latency-critical interactions
+  like hovers, drags, animations, and text editing,
+  so incremental layout can dramatically faster
+  than computing each layout from scratch.
+
+\subsection{Dirty bits}
+\label{sec:recompute-phase}
+
+Incremental layout is conceptually straightforward. 
+Each layout field has a corresponding \textit{dirty} bit,
+  which defines whether that layout field needs to be recomputed.%
+\footnote{Several layout fields can all have
+  the same corresponding dirty bit,
+  which is set if any of those fields need to be recomputed.}
+When the application code
+  writes to an attribute or property,
+  or adds or removes layout nodes,
+  it sets the dirty bits for all layout fields
+  that read from those fields or node pointers.
+For example,
+  in the paragraph layout of \Cref{fig:layout-simple},
+  when a node's \textsf{height} attribute is changed,
+  its $H$ field must be marked dirty.
+When a subtree is deleted,
+  its next sibling's $HA$ field must be marked dirty.
+If the subtree was the last child of its parent,
+  the parent's $H$ field must also be marked dirty.
+This set of fields can be statically determined in our DSL
+  and in fact our Megatron compiler can synthesize
+  this marking code.
+
+Incremental layout then has the task of clearing the dirty bits
+  by recomputing dirty fields.
+Conceptually this is simple:
+  find all dirty bits on all nodes and recompute their fields.
+However, when a layout field is recomputed,
+  its value might change,
+  and any layout fields that read the old value
+  are now out of date.
+Thus, when incremental layout modifies a layout field,
+  it must dirty all layout fields that depend on it,
+  ``propagating'' dirty bits through the document.
+For example,
+  in the paragraph layout of \Cref{fig:layout-simple},
+  when a node's $H$ field is recomputed,
+  its $HA$ field must be marked dirty.
+When that $HA$ field is recomputed,
+  its next sibling's $HA$ field is then marked dirty in turn.
+Because of dirty bit propagation,
+  the set of layout fields \emph{currently} marked dirty
+  is distinct from the set of all layout fields
+  that incremental layout must ultimately recompute.
+
+This second set is \emph{discovered}
+  in the process of performing incremental layout,
+  since we only know if a layout field's value changes
+  when we recompute it and can compare the old and new value.
+For example, suppose the user is typing out a paragraph of text,
+  laid out using \Cref{fig:layout-simple}'s layout algorithm.
+Most edits just add text to a single line,
+  not affecting its height or available width;
+  these only end up dirtying a single field on a single node.
+This is why incremental layout works:
+  many interactions---%
+  especially latency-critical ones like
+  hovers, drags, animations, and text editing---%
+  do not change fields on containing elements,
+  and end up affecting only a small portion of the page.
+
+\subsection{Recomputation Order}
+
+Incremental layout strives to minimize
+  the number of layout fields recomputed.
+As one part of this, it must ensure that, once recomputed,
+  a layout field is not marked dirty again during that layout.
+Luckily, there is a simple way to guarantee this:
+  a correct from-scratch layout
+  always processes dependencies before the field itself,
+  so recomputing layout fields
+  in the \emph{same relative order}
+  ensures that each layout field is marked dirty at most once.
+A naive incremental layout algorithm might thus
+  execute the same layout schedule as a from-scratch layout
+  but skip re-computing any fields that aren't dirty.
+This algorithm recomputes the minimal number of layout fields,
+  clears all the dirty bits,
+  and avoids ever recomputing a layout field more than once.
+
+However, this naive algorithm isn't particularly fast:
+  it must access every layout node to check its dirty bits,
+  which incurs a lot of cache misses.
+In the common case, most dirty bits aren't set;
+  these ``auxiliary'' accesses cause needless cache misses
+  and end up wasting a significant fraction of run time.
+For incremental layout to be fast,
+  auxiliary accesses---%
+  accesses that don't result in field recomputations---%
+  must be minimized.
+We note before continuing that,
+  while this is a quite specific and specialized problem,
+  it is a major source of latency in existing web browsers,
+  which in turn are both critical application platforms
+  and also already highly optimized,
+  meaning remaining sources of latency are
+  particularly challenging.
+
+\subsection{The Double Dirty Bit Algorithm}
+
+The state-of-the-art Double Dirty Bit algorithm,
+  uses summary bits to reduce auxiliary accesses;
+  it is used, with variations, in all major rendering engines.
+For each dirty bit, we add a second ``summary bit'',
+  which is set for a node when that dirty bit is set
+  anywhere in the \emph{subtree} rooted at that node.
+Every time a dirty bit is set,
+  the associated summary bit is set
+  on that node and all its ancestors.
+When performing incremental layout,
+  subtrees whose summary bits are clear can be skipped.
+Figure~\ref{fig:find-dirty-nodes} contains
+  pseudo-code for Double Dirty Bit
+  as an iterator over dirty nodes.
+
+\begin{figure}
+\begin{minipage}[b]{0.5\linewidth}
+\begin{verbatim}
+def mark_dirty(self):
+    self.dirty = True
+    self.set_summary_bit()
+
+def set_summary_bit(self):
+    if self.summary_bit: return
+    self.summary_bit = True
+    if self.parent:
+        self.parent.set_summary_bit()
+\end{verbatim}
+\caption{Setting the summary bit for a node.}
+\label{fig:set-summary-bits}
+\end{minipage}\hfill%
+\begin{minipage}[b]{0.5\linewidth}
+\begin{verbatim}
+def find_dirty_nodes(self):
+    if self.dirty:
+        yield self
+        self.dirty = False
+    if self.summary_bit:
+        # Access auxiliary nodes
+        for child in self.children:
+            find_dirty_nodes(child)
+        self.summary_bit = False
+\end{verbatim}
+\caption{Finding the dirty nodes in a tree.}
+\label{fig:find-dirty-nodes}
+\end{minipage}
+\end{figure}
+
+Skipping subtrees with no dirty bits
+  reduces the number of auxiliary accesses
+  and greatly improves performance~\cite{tali-garseil,wbe}.
+However, it still has \emph{some} auxiliary accesses.
+Specifically, when a dirty bit is set on some node,
+  summary bits will be set for all ancestors of that node,
+  which Double Dirty Bit will have to check.
+Moreover, for each ancestor,
+  Double Dirty Bit will recurse into its children,
+  adding even more auxiliary accesses.
+Since layout trees are poorly balanced and often very wide,
+  the number of auxiliary accesses can be large.
+For example,
+  a single dirtied node in \Cref{fig:google} has 66 auxiliary nodes,
+  and on larger pages the dirty-to-auxiliary ratio can be much worse.
+
+Developers can sometimes reduce the number of auxiliary accesses
+  by reorganizing large, complex pages,
+  and performance monitoring tool
+  like Google's Lighthous~\cite{lighthouse}
+  suggest doing so.
+But this can require global changes to the shape of the layout tree,
+  which (in modern frameworks like React)
+  requires refactoring the application as a whole.
+Naturally, an invalidation algorithm that simply
+  did not require so many auxiliary nodes
+  would be a superior solution.

@@ -1,35 +1,45 @@
-\section{Optimization}
+\section{Micro-Optimizations}
 \label{sec:opt}
 
-By avoiding auxiliary node accesses,
-  Spineless Traversal can be
-  dramatically faster than Double Dirty Bit
-  in certain cases.
-Moreover, the extensive use of nontrivial data structure in Spineless Traversal
-  introduces multiple optimization opportunities, which can avoid allocation, reduce memory traffic, and alleviate branch mispredictions.
+Maximizing Spinless Traversal's advantage
+  over Double Dirty Bit
+  requires careful micro-optimizations
+  to improve cache locality,
+  reduce memory traffic,
+  and alleviate branch mispredictions.
+Unlike the optimization passes of the Megatron compiler,
+  which apply to all invalidation algorithms,
+  these optimizations are implemented
+  in the Spineless Traversal invalidation algorithm
+  and only affect it.
 
-\subsection{Pointer Compression and Custom Allocator}
+\subsection{Pointer Compression and OM Allocation}
+
 Order maintenance objects have to be allocated every time
   new layout nodes are inserted;
   optimizing that allocation is essential.
-We use a hand-written pool allocator for order maintenance objects;
+We use a hand-written pool allocator;
   in fact, we use separate pools
   for high- and low-level list cells
   to enhance locality.
-Since allocations are always for the same size,
-  our custom allocator is significantly simpler than the system allocator.
+Since allocation are always the same size,
+  and since layout is single-threaded,%
+\footnote{As it is in all major browsers.}
+  our custom allocator is significantly
+  simpler than the system \texttt{malloc}.
 
-Our pooled allocator, \texttt{OMPool},
+The allocator, \texttt{OMPool},
   is shown in Figure~\ref{fig:allocator}.
-It is paramaterized by \emph{two} types:
+It is parameterized by \emph{two} types:
   the type of allocated object \texttt{T}
   and the index type \texttt{P} for pointers to allocated objects.
 Crucially,
   \texttt{malloc} and \texttt{free} return and consume
   the pointer type \texttt{P} instead of raw pointers.
 (And \texttt{addressof} function converts
-  the pointer type \texttt{P} to a raw pointer.)
-By making \texttt{P} a smaller integer type,
+  the pointer type \texttt{P} to a raw pointer
+  so that it can be dereferenced.)
+By making \texttt{P} a small integer type,
   like \texttt{uint32} or \texttt{uint16},
   order maintenance objects become smaller
   and more of them fit per cache line,
@@ -37,10 +47,7 @@ By making \texttt{P} a smaller integer type,
 In our implementation, we use 32-bit pointers;
   this conveniently makes the total size
   of an order maintenance object 128 bits,
-  meaning that it exactly fits in each cache line,
-  with no order maintenance objects split across two.
-\footnote{By contrast, an experiment with 16-bit pointers
-  actually increased runtime.}
+  meaning that no order maintenance objects split across two cache lines.
 
 The actual implementation of \texttt{OMPool} is standard;
   it stores a \texttt{pool} of memory as a \texttt{std::vector},
@@ -50,145 +57,83 @@ Freed elements are placed in a separate \texttt{freed} vector,
 Because the objects are all the same size,
   there is no fragmentation and \texttt{malloc}/\texttt{free}
   are nearly instantaneous.
-Moreover, since spineless traversal
-  creates order maintenance objects in order,
+Moreover, since Spineless Traversal
+  creates Order Maintenance objects in order,
   allocation patterns are extremely favorable,
-  with temporally-close nodes placed nearby in memory.
+  with temporally-close nodes often placed nearby in memory.
 
 \begin{figure}
-\begin{verbatim}
-
+% Newlines below to align figure captions
+\begin{Verbatim}[formatcom=\color{gray}, commandchars={+[]}]
 template<
-  typename T,             // Type of allocated object
-  typename P=uint32_t     // Integer type for "pointers"
+  typename T,                   // Type of allocated object
+  +color[red][typename P=uint32_t]           +color[black][// Integer type for "pointers"]
 > struct OMPool {
-  std::vector<T> pool;    // Fast allocation, maximize cache usage
-
-  std::vector<P> freed;   // Rapid reuse minimizes cache churn
-  
-  // Implementation is straightforward
-  T* addressof(P p) { return &(pool[p]); }
-  P malloc();
-  void free(P p) { freed.push_back(p); }
+  +color[red][std::vector<T> pool;]          +color[black][// Fast, local allocations]
+  +color[black][std::vector<P> freed;         // Rapid reuse minimizes churn]
+  P malloc();                   // Straightforward
+  +color[black][void free(P p) { freed.push_back(p); }]
+  +color[black][T* addressof(P p) { return &(pool[p]); }]
 }
-\end{verbatim}
-\caption{A pooling allocator that focuses on reducing cache misses.}
+\end{Verbatim}
+\caption{A pooling allocator to reduce cache misses.
+  The pointer type $P$ is smaller than a standard pointer,
+    allowing order maintenance objects to be smaller
+    and thereby fit tightly in a cache line.}
 \label{fig:allocator}
 \end{figure}
 
-\subsection{Branchless Order Maintenance Comparison}
-Priority queue pushes and pops spend basically all of their time
-  comparing order maintenance objects.
-Order maintenance objects are small and,
-  thanks to our allocator, typically stay in cache.
-However, order maintenance object comparison has two cases
-  (same or different second-level lists)
-  and the bottleneck ends up being the pipeline stall
-  induced by the conditional.
-The branch predictor does not help much,
-  because (thanks to the heap) the comparison is unpredictable.
-We therefore implemented a branchless comparison function,
-  relying on conditional move instructions instead;
-  in a microbenchmark, this reduces comparison time
-  to 5 cycles; Figure~\ref{fig:compare} shows the
-  assembly implementation.
-
-
 \begin{figure}
-
 \begin{Verbatim}[formatcom=\color{gray}, commandchars={+[]}]
-bool operator<(const _l2_node &l, const _l2_node &r) {
-  Label lpl = l.parent->label, rpl = r.parent->label;
-  Label ll = l.label, rl = r.label;
-  uint64_t result;
-  asm volatile(
-  
-    "+color[black][xor   %%rbx,  %%rbx]    +color[gray][\n"]
-    "+color[black][cmp   %1,     %2]       +color[gray][\n"]
-    "+color[black][seta  %%bl]             +color[gray][\n"]
-    "+color[black][xor   %%rax,  %%rax]    +color[gray][\n"]
-    "+color[black][cmp   %3,     %4]       +color[gray][\n"]
-    "+color[black][seta  %%al]             +color[gray][\n"]
-    "+color[red][cmove %%rbx,  %%rax]    +color[gray][\n"]
-    
-    : "=&a"(result) : "r"(ll), "r"(rl), "r"(lpl), "r"(rpl));
-  return result;
-}
+Label lpl = l.parent->label, rpl = r.parent->label;
+Label ll = l.label, rl = r.label; uint64_t result;
+asm volatile(
+  "+color[black][xor   %%rbx,  %%rbx]    +color[gray][\n"]
+  "+color[black][cmp   %1,     %2]       +color[gray][\n"]
+  "+color[black][seta  %%bl]             +color[gray][\n"]
+  "+color[black][xor   %%rax,  %%rax]    +color[gray][\n"]
+  "+color[black][cmp   %3,     %4]       +color[gray][\n"]
+  "+color[black][seta  %%al]             +color[gray][\n"]
+  "+color[red][cmove %%rbx,  %%rax]    +color[gray][\n"]
+  : "=&a"(result)
+  : "r"(ll), "r"(rl), "r"(lpl), "r"(rpl));
+return result;
 \end{Verbatim}
 \caption{
-  The branchless comparison assembly code,
+  The branchless comparison code,
     with the conditional move instruction highlighted.
   Note that, while the assembly snippet
     is seven instructions long,
-    the two \texttt{xor} instructions clear a register
-    and are thus handled by the register renamer,
-    and also the \texttt{cmp}/\texttt{seta} combination
-    is fused on recent Intel/AMD CPUs.
-  This means the assembly snippet itself
-    typically takes three cycles to execute;
+    the two \texttt{xor} instructions
+    are handled by the register renamer,
+    and \texttt{cmp}/\texttt{seta} is fused on recent Intel/AMD CPUs.
+  The assembly snippet thus executes in three cycles;
     even adding the label loads,
     comparison typically takes only five cycles.
 }
 \label{fig:compare}
 \end{figure}
 
-\subsection{Dependency Deduplication}
+\subsection{Branchless Order Maintenance Comparison}
 
-When synthesizing the dirty bit propagation code,
-  we make sure to only dirty any given field once per field computation.
-For example, if a field $N.V$ is used twice in an expression,
-  or if two different paths $\mathsf{first}.V$ and $\mathsf{last}.V$
-  reverse to the same field,
-  the field is only dirtied once.
-This deduplication is especially challenging in the case
-  of $N?$ expressions,
-  since whether or not a field is dirtied can depend on whether an element
-  is the first/last/other child of its parent.
-Moreover, the dirty bit is checked before pushing to the priority queue;
-  this means any node field appears in the priority queue
-  at most once, which keeps the queue small.
-
-\subsection{Field packing}
-
-To further shrink the size of the priority queue,
-  we use a single dirty bit to cover multiple co-computed fields.
-Instead of a dirty bit per field,
-  we use two dirty bits per pass---%
-  one for the pre-order-computed fields
-  and one for post-order-computed fields---%
-  and place these pass references,
-  not individual fields, in the priority queue.
-This further reduces the number of unique dirty bits
-  set during dirty bit propagation
-  and reduces the size of the priority queue
-  and the number of order maintenance objects needed.
-Field packing in this way is a common optimization in real browsers;
-  the trade-off is that it reduces the complexity
-  (and thus cache misses in) invalidation traversal
-  at the cost of possibly more field recomputations
-  (since the browser must now recompute \emph{all} covered fields
-  when a dirty bit is set);
-  the trade-off appears to be worth it.
-Spineless Traversal can be applied to any field packing,
-  whether finer- or coarser-grained,
-  though coarser-grained packing makes
-  the priority queue smaller,
-  meaning that, with Spineless Traversal,
-  browsers may opt for coarser-grained field packing
-  then they do today.
-
-\subsection{Field representation}
-
-Recall that priority queue entries
-  refer to either a subtree or a node,
-  and also name a pass, plus (in the case of a node) a bit to indicate whether 
-  the dirtied fields are the pre-order-computed fields,
-  or the post-order-computed fields.
-We combine the subtree-or-node bit with the phase and pre/post fields bit
-  into a simple enum, which we store in a byte.
-We then use the enum as an index into a jump table,
-  which allows us to efficiently execute the recomputation
-  that corresponds to a single priority queue entry.
+Priority queue pushes and pops spend basically all of their time
+  comparing order maintenance objects.
+Order maintenance objects are small and,
+  thanks to our allocator, typically cached.
+However, order maintenance object comparison has two cases
+  (same or different second-level lists)
+  and the bottleneck ends up being the pipeline stall
+  induced by the conditional.
+The branch predictor does not help much,
+  because (thanks to the priority queue) the comparison is unpredictable.
+We therefore implemented a branchless comparison function,
+  relying on inline assembly \texttt{cmov} instructions,
+  shown in \Cref{fig:compare};
+  it executes in about five cycles of latency.
+Assembly makes the implementation non-portable,
+  but this function is critical for performance
+  and we weren't able to make the C++ compiler
+  generate comparably-fast code, despite several attempts.
 
 \subsection{Attempted, Failed Optimizations}
 
@@ -200,17 +145,19 @@ A number of attempted optimizations
     but the priority queue for more distant jumps.
   We were unable to make switching between the two modes
     efficient enough to be competitive.
-\item A splay tree instead of a min-heap to exploit insertion pattern.
-  Resulted in a slowdown.
-\item A red-black tree instead of a min-heap for the priority queue.
-  Resulted in a slowdown.
-\item 1-based array in the min-heap, to speedup index manipulation.
-  Resulted in a slowdown.
+\item A splay tree instead of a min-heap.
+  Slower, likely due to worse cache locality.
+\item A red-black tree instead of a min-heap. Also slower.
+\item A 1-based array in the min-heap, to speed up index manipulation.
+  Slower.
 \item 16-bit \texttt{OMPool} pointers/OM labels.
   No faster than 32 bits, and more rebalancings needed.
-\item Reduce priority queue node size
-  by pointer tagging. No faster.
+  We suspect that this is because 16-bit pointers/labels
+  only shrink OM cells from 16 to 8 bytes,
+  but load ports on modern CPUs already load 16 bytes at a time.
+\item Pointer tagging to make priority queue elements smaller.
+  No faster.
 \item Splitting OM \texttt{left}/\texttt{right} pointers
-  from the \texttt{label} and \texttt{parent}/\texttt{children} pointers, to improve cache locality. Did not see improvement.
-\item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. Did not see improvement.
+  from the \texttt{label} and \texttt{parent}/\texttt{children} pointers, to improve cache locality. No improvement.
+\item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. No improvement.
 \end{itemize}

@@ -1,4 +1,6 @@
-\documentclass[acmsmall, screen]{acmart}
+\documentclass[acmsmall, screen, review, anonymous]{acmart}
+
+% Revision cover letter: https://docs.google.com/document/d/1ue1zHnTmnHmwwDP7-8p7e6VPajfB8ByVkpvCwhd0Mdc/edit?tab=t.0
 
 \usepackage{syntax}
 \usepackage{booktabs} % For formal tables
@@ -8,6 +10,7 @@
 \usepackage[ruled]{algorithm2e} % For algorithms
 \usepackage{svg} % For svg images
 \usepackage{fancyvrb}
+\usepackage{cleveref}
 
 \usepackage{tikz}
 \renewcommand{\algorithmcfname}{ALGORITHM}
@@ -89,7 +92,7 @@ These engines reduce latency by using
   to redraw the page when
   the user interacts with it.
 In such an algorithm,
-  elements that change frame-to-frame are marked dirty;
+  elements that change frame-to-frame are marked dirty, and
   only the dirty elements need be processed
   to draw the next frame,
   dramatically reducing latency.
@@ -105,22 +108,23 @@ These auxiliary elements
 We introduce a new, faster incremental layout algorithm
   called Spineless Traversal.
 Spineless Traversal
-  uses a more computationally demanding
-  priority queue algorithm
-  to avoid the need to access auxiliary nodes
+  avoids accessing auxiliary nodes
+  through a new, 
+  more computationally demanding
+  but cache-friendlier priority queue algorithm
   and thus reduces cache traffic and stalls.
 This leads to dramatic speedups
   on the most latency-critical interactions
-  such as hovering, typing, or animations.
+  such as hovering, typing, and animation.
 Moreover, thanks to numerous low-level optimizations,
   we are able to make Spineless Traversal
   competitive across the whole spectrum of
   incremental layout workloads.
 As a result, across \NumFrames~benchmarks,
-  Spineless Traversal is faster on \PctFaster of the benchmark,
+  Spineless Traversal leads
+  to faster layout on \PctFaster,
   with a mean speedup of \MeanSpeedup
-  concentrated in the most latency-critical interactions
-  such as hovering, typing, and animations.
+  concentrated in the most latency-critical interactions.
 \end{abstract}
 
 \include{numbers}
@@ -144,12 +148,13 @@ As a result, across \NumFrames~benchmarks,
 % The default list of authors is too long for headers}
 \renewcommand{\shortauthors}{M. Kirisame et al.}
 \input{intro.tex}
-\input{layout.tex}
-\input{spineless.tex}
-\input{optimization.tex}
+\input{background}
+\input{incremental-layout}
+\input{spineless}
 \input{megatron}
-\input{eval.tex}
-\input{RW.tex}
+\input{optimization}
+\input{eval}
+\input{RW}
 %\bibliographystyle{acm}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{main}
