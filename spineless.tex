@@ -17,13 +17,12 @@ Since Spineless Traversal is complex,
   then adding timestamps to maintain traversal order,
   and finally introducing the order maintenance structure
   to handle node insertion and deletion.
-A final step optimizes bulk insertions and deletions.
+A final subsection optimizes bulk insertions and deletions.
 
 \subsection{Jumping Directly to Dirty Nodes}
 
 To jump directly to dirty nodes,
-  we introduce a queue
-  that stores pointers to dirty nodes.
+  we introduce a queue of pointers to dirty nodes.
 More specifically, elements of the queue represent
   dirty bits in the layout tree that need to be cleared,
   and are represented in the queue by
@@ -40,7 +39,7 @@ Note that dirty bits are still present on layout nodes;
 To perform an incremental layout,
   elements are popped from the queue
   and the relevant fields on the relevant node are recomputed,
-  and clearing the relevant dirty bit.
+  clearing the relevant dirty bit.
 In the process, new dirty bits may be set,
   so new elements may be added to the queue.
 This is repeated until the queue is empty.
@@ -48,12 +47,11 @@ Only dirty nodes are ever in the queue,
   meaning only they---not auxiliary nodes---are ever accessed.
 
 Concretely, the queue is stored in a packed array,
-  meaning that clearing a dirty bit accesses
-  one dirty element,
+  which due to heavy use will remain in cache.
+Clearing a dirty bit thus suffers cache misses
+  only for the dirty element,
   plus its at most five neighbors.
-If the queue stays in L2 cache due to repeated access,
-  while elements do not due to their size,
-  this means clearing a dirty bit incurs
+This means clearing a dirty bit incurs
   a maximum of six L2 cache misses---%
   much fewer than the number of auxiliary accesses
   typical of Double Dirty Bit.
@@ -72,9 +70,9 @@ In the full Spineless Traversal algorithm,
   but for now the reader can imagine it an integer counting up from 0.
 The queue of dirty nodes is then refined to a priority queue,
   ordered by these timestamps.
-The priority queue ``pops'' the element with the lowest timestamp,
-  thus ensuring that Spineless Traversal clears dirty bits
-  in timestamp order and thus clears each dirty bit exactly once.
+The priority queue ``pops'' the lowest timestamp first,
+  so Spineless Traversal clears dirty bits in timestamp order
+  and thus clears each dirty bit exactly once.
 
 Concretely, we use a min-heap as our priority queue,
   which is cache-friendly and requires
@@ -82,7 +80,7 @@ Concretely, we use a min-heap as our priority queue,
 Timestamps are stored adjacent to dirty bits,
   meaning they do not introduce any new L2 cache misses.
 The priority queue is typically small:
-  while there are typically thousands of nodes,
+  while a web page may have thousands of nodes,
   with each node having dozens of fields in our evaluation,
   the priority queue typically contains less than 1000 elements,
   and for the most latency-critical interactions,
@@ -97,19 +95,15 @@ With such a small size, a priority queue push/pop requires
 
 The final challenge is efficiently assigning timestamps
   to every dirty bit on every node.
-Simple incrementing integer timestamps, sadly,
-  don't work when nodes are inserted or deleted:
-  inserting a node would shift all future timestamps,
-  so while inserting the node and performing incremental layout
-  might access only a few nodes,
-  reassigning timestamps would access many more.
+Simple incrementing integer timestamps, sadly, don't work:
+  inserting a node would requiring adjusting all later timestamps,
+  which would introduce its own set of auxiliary accesses.
 Instead, following SAC~\cite{SAC},
   Spineless Traversal uses
   an \emph{order maintenance} data structure (OM)
   to assign timestamps.
 First introduced by \citet{OM},
-  order maintenance is a data structure
-  that maintains a totally ordered set of objects
+  order maintenance maintains a totally ordered set of objects
   while allowing objects
   to be added and removed from the order arbitrarily.
 Crucially, adding, removing, and comparing nodes takes $O(1)$ time.
@@ -126,29 +120,31 @@ Abstractly, order maintenance provides the following API:
 \noindent
 Deleting OM objects is also possible, though by default
   our implementation does not do so.%
-\footnote{On long-running pages this is a memory leak,
-  albeit a very slow one;
-  enabling OM object deletion adds
-  only a minor slowdown to Spineless Traversal,
-  roughly 2\%.}
+\footnote{On long-running pages
+  this causes very-slowly-growing memory usage.
+  Enabling OM object deletion avoids this but adds
+  roughly 2\% to Spineless Traversal's running time.}
 
 Our implementation is based on that by \citet{SOM},
   which uses a two-level structure with
-  a double-linked list of double-linked lists.
+  a doubly-linked list of doubly-linked lists
+  (\Cref{fig:om}).
 Objects are represented by nodes in the lower-level lists.
 Both levels are ordered;
-  the total order traverses lower-level lists in order,
-  in the order dictated by the higher-level list.
+  the total order is lexicographic,
+  traversing higher-level lists in order
+  and then, for each higher-level list,
+  its lower-level list in order.
 Each object (node in the lower-level list)
   maintains a pointer to its higher-level list cell;
   two objects are in the same low-level list
   if they have the same higher-level pointer.
 To allow fast comparisons between nodes,
-  both low-level and high-level list cells store
+  each low-level and high-level list cells stores
   an unsigned integer of fixed size
   (in our implementation, 32~bits)
-  called labels.
-Within both lists, node labels are strictly increasing;
+  called its label.
+Within a list, node labels are strictly increasing;
   this makes comparisons fast.
 Specifically, comparison has two cases:
   if the two objects are in the same low-level list,
@@ -179,7 +175,7 @@ This process might
 Rebalancing is algorithmically tricky
   but is not a significant time sink in our use case,
   so we do not detail re-balancing here;
-  details can be found in \citet{SOM}.
+  interested readers can find a description in \citet{SOM}.
 
 \begin{figure}
 \begin{tikzpicture}
@@ -220,13 +216,13 @@ To compare two timestamps, both pointers must be dereferenced
   to access the two lower-level OM objects.
 The associated higher-level OM objects must also be accessed.
 In the typical case, where the priority queue remains small,
-  all of these OM objects in the priority queue
+  all of the OM objects in the priority queue
   are already in cache,
   so ``pops'' have no additional cache misses,
-  while ``pushes'' add one, for the new element OM cell.
+  while ``pushes'' add just one or two, for the new element OM cells.
 In total, all the priority queue and order maintenance operations
-  thus add the equivalent of 3--5~L2~cache misses in latency,
-  about 100--200 cycles.
+  thus add the equivalent of 3--6~L2~cache misses in latency,
+  about 100--300 cycles.
 Since recomputing a field, accessing neighbors' fields,
   and setting neighbors' dirty bits can itself take hundreds of cycles,
   Spineless Traversal's overhead is fairly small.
@@ -237,7 +233,7 @@ Since recomputing a field, accessing neighbors' fields,
 Bulk insertions into the layout tree
   are common in ``lazy loading'' patterns:
   a ``shell'' web page loads first and shows a loading indicator;
-  then the ``content'' loads and is inserted a large subtree,
+  then the ``content'' loads and is inserted as a large subtree,
   replacing the loading indicator.
 This pattern is encouraged by frameworks like React,
   and can occur in several stages, with a ``shell''
@@ -249,11 +245,11 @@ Efficiently handling these bulk insertions
   for Spineless Traversal's worst performance
   relative to Double Dirty Bit.
 
-The basic issue is that in a fresh subtree being inserted into the page,
+The basic issue is that when a fresh subtree is inserted,
   every field needs to be computed
   and every OM object needs to be initialized,
-  without causing the priority queue itself to grow large.
-Our solution adds these ``initialization passes''
+  all without causing the priority queue to grow too large.
+Our solution add is to add ``initialization passes''
   as special elements in the priority queue:
   besides $(v, n)$ pairs for a dirty field $v$ on node $n$,
   an element can also be $(p, r)$,

@@ -1,10 +1,10 @@
-\section{Micro-Optimizations}
+\section{Optimizations}
 \label{sec:opt}
 
 Maximizing Spinless Traversal's advantage
   over Double Dirty Bit
-  requires careful micro-optimizations
-  to improve cache locality,
+  requires careful optimizations
+  to reduce work needed, improve cache locality,
   reduce memory traffic,
   and alleviate branch mispredictions.
 Unlike the optimization passes of the Megatron compiler,
@@ -13,8 +13,15 @@ Unlike the optimization passes of the Megatron compiler,
   in the Spineless Traversal invalidation algorithm
   and only affect it.
 
-\subsection{Pointer Compression and OM Allocation}
+\subsection{Queue Compression}
 
+Although the queue size is typically small, often only tens of elements long, it can occasionally become very large. This typically happens when the entire page must be re-laid-out, such as when the browser window is resized. In this case, every dirty bit ends up in the priority queue, and the queue can grow to thousands of elements long. This not only means that more queue pushes and pops are needed, but also that those pushes and pops take longer.
+
+In theses cases the queue is often dense: for every dirty bit in the queue, its successor is also likely dirty and enqueued as well. Leveraging this insight, we can shrink the queue by representing sequences of enqueued dirty bits implicitly. That is, every time a queue element is popped, Megatron not only recomputes those fields but it also checks if the succeeding dirty bit is dirty and, if so, recompute it too. Megatron continues recomputing successive dirty bits until it reaches a cleared dirty bit. When a dirty bit is set, it doesn't need to be enqueued if its predecessor is dirty. This leads to a significant reduction in queue length, and thus speeds up cases where many fields have to be recomputed, such as during initial loads and bulk inserts.
+
+In principle, Megatron could even avoid checking predecessor dirty bits when this optimization is statically known to apply. However, we did not implement this further optimization.
+
+\subsection{Pointer Compression and OM Allocation}
 Order maintenance objects have to be allocated every time
   new layout nodes are inserted;
   optimizing that allocation is essential.
@@ -22,7 +29,7 @@ We use a hand-written pool allocator;
   in fact, we use separate pools
   for high- and low-level list cells
   to enhance locality.
-Since allocation are always the same size,
+Since allocations are always the same size,
   and since layout is single-threaded,%
 \footnote{As it is in all major browsers.}
   our custom allocator is significantly
@@ -36,21 +43,22 @@ It is parameterized by \emph{two} types:
 Crucially,
   \texttt{malloc} and \texttt{free} return and consume
   the pointer type \texttt{P} instead of raw pointers.
-(And \texttt{addressof} function converts
+(The \texttt{addressof} function converts
   the pointer type \texttt{P} to a raw pointer
   so that it can be dereferenced.)
-By making \texttt{P} a small integer type,
+Making \texttt{P} a small integer type,
   like \texttt{uint32} or \texttt{uint16},
-  order maintenance objects become smaller
-  and more of them fit per cache line,
-  which in turn improves throughput.
+  shrinks order maintenance objects,
+  which allows more of them fit per cache line,
+  improving throughput.
 In our implementation, we use 32-bit pointers;
   this conveniently makes the total size
   of an order maintenance object 128 bits,
-  meaning that no order maintenance objects split across two cache lines.
+  meaning that order maintenance objects
+  do not split across cache lines.
 
 The actual implementation of \texttt{OMPool} is standard;
-  it stores a \texttt{pool} of memory as a \texttt{std::vector},
+  it stores a \texttt{pool} of memory as an \texttt{std::vector},
   in which we ensure sufficient capacity at startup.
 Freed elements are placed in a separate \texttt{freed} vector,
   which is preferentially drawn from by \texttt{malloc}.
@@ -64,16 +72,16 @@ Moreover, since Spineless Traversal
 
 \begin{figure}
 % Newlines below to align figure captions
-\begin{Verbatim}[formatcom=\color{gray}, commandchars={+[]}]
+\begin{Verbatim}[formatcom=\color{gray}, commandchars=+~!]
 template<
   typename T,                   // Type of allocated object
-  +color[red][typename P=uint32_t]           +color[black][// Integer type for "pointers"]
+  +color~red!~typename P=uint32_t!           +color~black!~// Integer type for "pointers"!
 > struct OMPool {
-  +color[red][std::vector<T> pool;]          +color[black][// Fast, local allocations]
-  +color[black][std::vector<P> freed;         // Rapid reuse minimizes churn]
+  +color~red!~std::vector<T> pool;!          +color~black!~// Fast, local allocations!
+  +color~black!~std::vector<P> freed;         // Rapid reuse minimizes churn!
   P malloc();                   // Straightforward
-  +color[black][void free(P p) { freed.push_back(p); }]
-  +color[black][T* addressof(P p) { return &(pool[p]); }]
+  +color~black!~void free(P p) { freed.push_back(p); }!
+  +color~black!~T* addressof(P p) { return &(pool[p]); }!
 }
 \end{Verbatim}
 \caption{A pooling allocator to reduce cache misses.
@@ -119,13 +127,14 @@ return result;
 Priority queue pushes and pops spend basically all of their time
   comparing order maintenance objects.
 Order maintenance objects are small and,
-  thanks to our allocator, typically cached.
+  thanks to our allocator, typically in cache.
 However, order maintenance object comparison has two cases
   (same or different second-level lists)
-  and the bottleneck ends up being the pipeline stall
-  induced by the conditional.
-The branch predictor does not help much,
-  because (thanks to the priority queue) the comparison is unpredictable.
+  and the pipeline stall from the conditional
+  ends up being a bottleneck.
+Moreover, the branch predictor does not help much,
+  because (thanks to the priority queue)
+  the comparison is unpredictable.
 We therefore implemented a branchless comparison function,
   relying on inline assembly \texttt{cmov} instructions,
   shown in \Cref{fig:compare};
@@ -156,8 +165,8 @@ A number of attempted optimizations
   only shrink OM cells from 16 to 8 bytes,
   but load ports on modern CPUs already load 16 bytes at a time.
 \item Pointer tagging to make priority queue elements smaller.
-  No faster.
+  No improvement.
 \item Splitting OM \texttt{left}/\texttt{right} pointers
   from the \texttt{label} and \texttt{parent}/\texttt{children} pointers, to improve cache locality. No improvement.
-\item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. No improvement.
+\item Deallocating OM objects when the corresponding tree node is deleted, to increase cache locality. A slight slow-down.
 \end{itemize}

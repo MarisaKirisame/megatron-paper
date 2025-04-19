@@ -8,11 +8,12 @@ To evaluate Spineless Traversal,
 \label{sec:compiler}
 
 The Megatron compiler
-  parses layout rules and schedules,
-  and compiles them to fast incremental layout algorithms in C++.
-Concretely, output of Megatron is an \texttt{recompute} function,
-  which is passed a node and field name
-  and recomputes that field on that node,
+  parses layout rules and schedules
+  and compiles them to a fast incremental C++ layout algorithm.
+Concretely, the output of Megatron
+  is a \texttt{recompute} function,
+  which is passed a node and a field name
+  and which recomputes that field on that node,
   setting dirty bits for any dependent fields.
 To produce this output, the compiler
   analyzes the static dependencies of each field assignment,
@@ -68,7 +69,7 @@ To allow for a head-to-head comparison
 It has two key methods:
   a \texttt{dirty} method
   that marks a node's field for later re-computation
-  and a \texttt{clean} function
+  and a \texttt{clean} method
   that invokes \texttt{recompute} on all dirty fields.
 Signatures for both functions are shown
   in \Cref{fig:traversal-api};
@@ -85,27 +86,27 @@ Three invalidation traversals are available in Megatron:
 \subsection{Dependent Synthesis}
 
 The most critical responsibility of the compiler
-  is synthesizing code that sets dependent dirty bits
+  is synthesizing code to sets dependent dirty bits
   every time a layout field is modified.
-This follows the standard approach from prior work.
+Megatron follows the standard approach from prior work.
 In short, for every field $U$,
   the compiler identifies all fields on all nodes
   that are affected when the value of $U$ changes,
   and generates code to set their dirty bits
   by calling the \texttt{dirty} method.
-To identify these affected fields,
+To identify affected fields,
   the compiler examines every \emph{other} field assignment
   $\mathsf{self}.V \gets T$ in the layout rules.
 For every field access $N.U$ in $T$,
   we know that $\mathsf{self}.V$ depends on $N.U$,
   meaning that any changes to $\mathsf{self}.U$
   must mark $N^{-1}.V$ as dirty;
-  here $N^{-1}$ is the inverse of the relation $N$;
+  here $N^{-1}$ inverts the relation $N$ by
   flipping \textsf{next} and \textsf{previous},
   mapping \textsf{first} and \textsf{last} to \textsf{parent},
   and mapping \textsf{parent} to all children.
 
-Moreover, insertions or deletions must also set dirty bits.
+Insertions and deletions also set dirty bits.
 Inserting a node changes the meaning
   of the \textsf{prev} and \textsf{next} pointers
   for its siblings, and possibly
@@ -136,14 +137,13 @@ Thus, setting $\mathsf{self}.W$ must dirty $\mathsf{parent}^{-1}.W$,
   and $\mathsf{self}.\text{attribute}[\mathsf{height}]$,
   and the $\mathsf{last}?$ dependency is subsumed by
   the $\mathsf{last}.HA$ dependency.
-Taking inverses, we obtain:
-  modifying $\mathsf{self}.\text{attribute}[\mathsf{height}]$
+Taking inverses, modifying $\mathsf{self}.\text{attribute}[\mathsf{height}]$
   must dirty $\mathsf{self}.H$ and,
   if the node is a last child,
   modifying $\mathsf{self}.HA$ or inserting/deleting a node
   must dirty $\mathsf{parent}.H$.
 \item The $HA$ field depends on $\mathsf{prev}?$, $\mathsf{prev}.HA$, 
-  and $\mathsf{self}.H$, with the $\mathsf{prev}$ dependency subsumed.
+  and $\mathsf{self}.H$, with the $\mathsf{prev}?$ dependency subsumed.
 Taking inverses, 
   modifying $\mathsf{self}.H$ must dirty $\mathsf{self}.HA$%
 \footnote{
@@ -165,7 +165,7 @@ These modification rules, gathered from analyzing each field access,
 For example, the code to recompute $HA$
   would check whether or not the node is a last child
   and dirty either $\mathsf{parent}.H$ (if so)
-  or $\mathsf{self}.HA$ (if not).
+  or $\mathsf{next}.HA$ (if not).
 Additionally,
   Megatron makes sure to only dirty any given field
   once per field recomputation.
@@ -204,8 +204,8 @@ val evaluate_staged : term -> env : (variable -> value code) -> value code
 
 Megatron's code generation has three key steps:
   generating the node data structure,
-  the field value computations,
-  and the top-level \texttt{recompute} function.
+  generating the field value computations,
+  and generating the top-level \texttt{recompute} function.
 To simplify code generation and optimization,
   the compiler is organized as a staged interpreter~\cite{MetaOCaml}.
 That is, we first implemented an interpreter,
@@ -213,7 +213,7 @@ That is, we first implemented an interpreter,
   \Cref{fig:stage} summarizes the approach.
 The custom IR is then converted to C++
   using traditional compiler optimizations.
-This development approach was critical,
+This approach was critical,
   as we found compiler correctness challenging:
   flaws in the dependency analysis could have unintuitive,
   long-distance consequences on program behavior
@@ -231,8 +231,8 @@ Importantly, this means a single node and all its fields
   (as it would be a real web browser)
   with a minimum of pointers
   (beyond the standard parent/first/last/next/previous pointers
-  to other layout nodes)
-  and that field access is compiled to a memory offset.
+  to other layout nodes),
+  with field access compiled to a memory offset.
 All string values (like the keyword values for \texttt{display})
   are interned and represented in C++ as
   a single \texttt{enum} type,
@@ -251,19 +251,19 @@ Packed fields are laid out adjacent in memory
   because they are written to, and often read from,
   in rapid succession.
 While more sophisticated techniques exist~\cite{yufeng-2},
-  Megatron uses a simple approach:
-  each pass in the layout rules gets two dirty bits,
+  Megatron simply uses two dirty bits
+  for each in the layout rules:
   one for the pre-order-computed fields
   and one for post-order-computed fields.
-The intuition is that this minimizeds
+The intuition is that this minimizes
   the number of unique dirty bits
   set during dirty bit propagation
   and reduces the size of the priority queue
-  and the number of order maintenance objects needed;
-  such field packing is common in real browsers.
+  and the number of order maintenance objects needed.
 Field packing has complex trade-offs
   not implemented in Megatron
-  but Spineless Traversal would work
+  but common in real browsers;
+  however, Spineless Traversal would work
   with any field packing.
 
 \paragraph{Field computations}

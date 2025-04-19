@@ -1,28 +1,26 @@
-
 \section{Introduction}
 
-Latency is a major concern for modern web rendering engines
-  such as those in Chrome, Safari, and Firefox.
-A rendering engine must redraw pages 60 times per second
+Latency is a major concern for modern web rendering engines.
+A rendering engine, such as that in Chrome, Firefox, or Safari,
+  must redraw pages 60 times per second
   to guarantee smooth animations, fluid interactions,
-  and responsive applications
-  as users browse and interact with web pages.
+  and responsive web applications.
 When this frame rate cannot be met,
   the user experiences lag and may be forced to use another web application, browser, or device.
 Modern 120\,Hz displays demand even lower latency.
 
 Layout is a key driver of web rendering latency.
 Layout means calculating the size and position
-  of each element of the web page,
-  after which the page can be rendered into pixels on the screen.
+  of each element on the web page,
+  after which the page can be rendered as pixels on the screen.
 Every time the user interacts with the web page
   by hovering over an element,
   receiving updated data,
   or even observing an animation,
   the web page changes
    and must be re-laid-out.
-Since layout is only one part of the larger rendering pipeline
-  this must be completed in a millisecond or less
+Since layout is only one part of the larger rendering pipeline,
+  this re-layout must be completed in a millisecond or less
   in order to meet the 60 frame-per-second goal.
 On such a tight budget, every cycle counts!
 
@@ -30,38 +28,38 @@ On such a tight budget, every cycle counts!
 The key optimization that makes this possible
   is \emph{incrementalization}.
 When an element on the page changes,
-  the browser \emph{marks}  it as dirty.
+  the browser \emph{marks} it dirty.
 When the page is re-laid-out,
-  the rendering engine traverses the page tree
-  to find and re-lay-out only the dirty nodes.
-In the process, it might mark additional nodes dirty,
-  due to dependencies between nodes,
-  but typically---in, say, animations or small interactions---%
+  the rendering engine traverses the page
+  to find and re-lay-out only the dirty elements.
+That might mark additional elements dirty,
+  due to dependencies between elements,
+  but typically---in, say, animations---%
   only a few nodes are ultimately re-laid-out.
 In these cases, searching the tree
   for dirty elements is the bottleneck,
-  especially since every node access
+  especially since every element access
   is likely to incur a cache miss.
 
-Browsers thus use the ``Double Dirty Bit'' algorithm
-  to find dirty nodes more quickly~\cite{wbe}.
-This algorithm adds summary bits to each node
-  to identify and skip subtrees without any dirty nodes.
+Browsers use the ``Double Dirty Bit'' algorithm
+  to find dirty nodes more quickly~\cite{wbe,tali-garseil}.
+This algorithm adds summary bits
+  to identify and skip subtrees without any dirty elements.
 While this reduces the search time,
   Double Dirty Bit still has to traverse the tree,
-  starting from the root, to find dirty nodes,
-  and must access not only the actually-dirty nodes
+  starting from the root, to find dirty elements,
+  and thus accesses not only the actually-dirty elements
   but many extra ``auxiliary nodes''.
 On large pages,
   auxiliary nodes can significantly outnumber
-  the actually-dirty nodes;
-  since  each node access can cause cache miss,
+  the actually-dirty elements;
+  and since each node access can cause a cache miss,
   simply traversing these auxiliary nodes,
   just to check their summary bits,
-  stalls the layout algorithm for hundreds of microseconds.
-Indeed, this problem is widely observed in practice;
+  can stall the layout algorithm for hundreds of microseconds.
+This problem is widely observed in practice;
   Google's widely-used web performance tool, Lighthouse,
-  uses tree depth and maximum children count as metrics
+  measures tree depth and maximum children count
   precisely because these parameters
   determine the number of auxiliary nodes.
 
@@ -69,13 +67,13 @@ Indeed, this problem is widely observed in practice;
 
 We introduce \textit{Spineless Traversal}:
   a new, faster algorithm for incremental layout.
-Unlike the standard Double Dirty Bit algorithm,
-  Spineless Traversal accesses only dirty nodes;
-  it requires no auxiliary nodes.
+Unlike Double Dirty Bit,
+  Spineless Traversal accesses only dirty elements,
+  not auxiliary nodes.
 It therefore reduces cache misses.
 Spineless Traversal works by
-  storing the set of dirtied nodes in a queue
-  and jumping directly from one dirty node to the next,
+  storing the set of dirty elements in a queue
+  and jumping directly from one to the next,
   with no auxiliary nodes in between.
 
 The key challenge is traversing the dirty nodes in the correct order. 
@@ -85,13 +83,13 @@ Recomputing a field on one node
 Fields must therefore be recomputed in a specific order,
   and Spineless Traversal must respect that order
   as it jumps from node to node.
-Spineless Traversal thus applies
-  a timestamp to each node,
-  and uses a priority queue traverse nodes
+Spineless Traversal thus stores
+  a timestamp on each node,
+  and uses a priority queue to traverse nodes
   in timestamp order.
-To maintain the order as nodes are added and removed,
-  Spineless Traversal uses an \emph{order maintenance} data structure
-  to compute relative timestamps in a flexible way.
+To maintain timestamps as nodes are added and removed,
+  Spineless Traversal \emph{order maintenance},
+  which compute relative timestamps in a flexible way.
 Both the priority queue and order maintenance structure
   are heavily optimized to make them competitive with Double Dirty Bit.
 
@@ -100,7 +98,7 @@ Both the priority queue and order maintenance structure
 We implement Spineless Traversal in Megatron,
   a new compiler for incremental layout algorithms.
 Megatron implements decades of research on attribute grammars:
-  it automatically analyzes the static dependency graph,
+  it statically analyzes the dependency graph,
   synthesizes recomputation and marking functions,
   and guarantees a correct incremental layout.
 It implements standard optimizations
@@ -113,13 +111,12 @@ Megatron supports both Double Dirty Bit and Spineless Traversal
 We compare the two algorithms on
   a significant fragment of web layout that includes
   line breaking, flex-box, intrinsic sizes, and many other features,
-  using \TotalTraceCount of real-world web pages
-  like Twitter, Discord, Github and Lichess.
+  benchmarking \TotalTraceCount real-world web pages
+  like Twitter, Discord, Github, and Lichess.
 Across \TotalDiffCount frames,
   Spineless Traversal is \DBPQtotal times faster on average.
-Speedups are concentrated in the most latency-critical changes
-  with the fewest dirty nodes:
-  on the \PctSmall of benchmarks
-  where fewer than 1\% of fields are recomputed,
+Speedups are concentrated in the most latency-critical frames:
+  on the \PctSmall of frames
+  where at most 1\% of fields are recomputed,
   Spineless Traversal achieves a speedup
-  of \MeanSpeedupSmall or more.
+  of \MeanSpeedupSmall.

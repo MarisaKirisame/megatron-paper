@@ -1,25 +1,51 @@
-@book{SAC,
-  title={Self-adjusting computation},
-  author={Acar, Umut A},
-  year={2005},
-  publisher={Carnegie Mellon University}
+@phdthesis{SAC,
+author = {Acar, Umut A. and Blelloch, Guy and Harper, Robert},
+title = {Self-adjusting computation},
+year = {2005},
+isbn = {0542015471},
+school = {Carnegie Mellon University},
+publisher = {Carnegie Mellon University},
+address = {USA},
+abstract = {This thesis investigates a model of computation, called self-adjusting computation , where computations adjust to any external change to their data (state) automatically. The external changes can change any data ( e.g. , the input) or decisions made during the computation. For example, a self-adjusting program can compute a property of a dynamically changing set of objects, or a set of moving objects, etc. This thesis presents algorithmic and programming-language techniques for devising, analyzing, and implementing self-adjusting programs. From the algorithmic perspective, we describe novel data structures for tracking the dependences in a computation and a change-propagation algorithm for adjusting computations to changes. We show that the overhead of our dependence tracking techniques is O (1). To determine the effectiveness of change propagation, we present an analysis technique, called trace stability , and apply it to a number of applications. From the languages perspective, we describe language facilities for writing self-adjusting programs in a type-safe and correct manner. The techniques make writing self-adjusting programs nearly as easy as ordinary (non-self-adjusting) programs. A key property of the techniques is that they enable the programmer to control the cost of dependence tracking by applying it selectively. Using language techniques, we also formalize the change-propagation algorithm and prove that it is correct. We demonstrate that our techniques are efficient both in theory and in practice by considering a number of applications. Our applications include a random sampling algorithm on lists, the quick sort and merge sort algorithms, the Graham's Scan and the quick algorithm for planar convex hull, and the tree-contraction algorithm. From the theoretical perspective, we apply trace stability to our applications and show complexity bounds that are within an expected constant factor of the best bounds achieved by special-purpose algorithms. From the practical perspective, we implement a general purpose library for writing self-adjusting programs, and implement and evaluate self-adjusting versions of our applications. Our experiments show that our techniques dramatically simplify writing self-adjusting programs, and yield very good performance even when compared to special-purpose algorithms, both in theory and in practice.},
+note = {AAI3166271}
 }
 
 @inproceedings{SACCost,
-  title={Self-adjusting computation: (an overview)},
-  author={Acar, Umut A},
-  booktitle={Proceedings of the 2009 ACM SIGPLAN workshop on Partial evaluation and program manipulation},
-  pages={1--6},
-  year={2009}
+author = {Acar, Umut A.},
+title = {Self-adjusting computation: (an overview)},
+year = {2009},
+isbn = {9781605583273},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1480945.1480946},
+doi = {10.1145/1480945.1480946},
+abstract = {Many applications need to respond to incremental modifications to data. Being incremental, such modification often require incremental modifications to the output, making it possible to respond to them asymptotically faster than recomputing from scratch. In many cases, taking advantage of incrementality therefore dramatically improves performance, especially as the input size increases. As a frame of reference, note that in parallel computing speedups are bounded by the number of processors, often a (small) constant.Designing and developing applications that respond to incremental modifications, however, is challenging: it often involves developing highly specific, complex algorithms. Self-adjusting computation offers a linguistic approach to this problem. In self-adjusting computation, programs respond automatically and efficiently to modifications to their data by tracking the dynamic data dependences of the computation and incrementally updating their output as needed. In this invited talk, I present an overview of self-adjusting computation and briefly discuss the progress in developing the approach and present some recent advances.},
+booktitle = {Proceedings of the 2009 ACM SIGPLAN Workshop on Partial Evaluation and Program Manipulation},
+pages = {1–6},
+numpages = {6},
+keywords = {asymptotic complexity, change propagation, compilers, continuations, dependence graphs, incremental modification, language design, performance, self-adjusting computation},
+location = {Savannah, GA, USA},
+series = {PEPM '09}
 }
 
 @inproceedings{PSAC,
-  title={Efficient parallel self-adjusting computation},
-  author={Anderson, Daniel and Blelloch, Guy E and Baweja, Anubhav and Acar, Umut A},
-  booktitle={Proceedings of the 33rd ACM Symposium on Parallelism in Algorithms and Architectures},
-  pages={59--70},
-  year={2021}
+author = {Anderson, Daniel and Blelloch, Guy E. and Baweja, Anubhav and Acar, Umut A.},
+title = {Efficient Parallel Self-Adjusting Computation},
+year = {2021},
+isbn = {9781450380706},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3409964.3461799},
+doi = {10.1145/3409964.3461799},
+abstract = {Self-adjusting computation is an approach for automatically producing dynamic algorithms from static ones. It works by tracking control and data dependencies, and propagating changes through the dependencies when making an update. Extensively studied in the sequential setting, some results on parallel self-adjusting computation exist, but are only applicable to limited classes of computations, or are ad-hoc systems with no theoretical analysis of their performance. In this paper, we present the first system for parallel self-adjusting computation that applies to a wide class of nested parallel algorithms and provides theoretical bounds on the work and span of the resulting dynamic algorithms. Our bounds relate a "distance" measure between computations on different inputs to the cost of propagating an update. The main innovation in the paper is in using Series-Parallel trees (SP trees) to track sequential and parallel control dependencies to allow change propagation to be applied safely in parallel. We demonstrate several example applications, including algorithms for dynamic sequences and dynamic trees. Lastly, we show experimentally that our system allows algorithms to produce updated results over large datasets significantly faster than from-scratch execution, saving both work and parallel time.},
+booktitle = {Proceedings of the 33rd ACM Symposium on Parallelism in Algorithms and Architectures},
+pages = {59–70},
+numpages = {12},
+keywords = {self-adjusting computation, parallel algorithms, incremental computation, dynamic algorithms},
+location = {Virtual Event, USA},
+series = {SPAA '21}
 }
+
 
 @inproceedings{SACTrace,
 author = {Acar, Umut A. and Blelloch, Guy and Ley-Wild, Ruy and Tangwongsan, Kanat and Turkoglu, Duru},
@@ -58,50 +84,85 @@ series = {PLDI '14}
 }
 
 @inproceedings{AdaptonName,
-  title={Incremental computation with names},
-  author={Hammer, Matthew A and Dunfield, Jana and Headley, Kyle and Labich, Nicholas and Foster, Jeffrey S and Hicks, Michael and Van Horn, David},
-  booktitle={Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
-  pages={748--766},
-  year={2015}
+author = {Hammer, Matthew A. and Dunfield, Jana and Headley, Kyle and Labich, Nicholas and Foster, Jeffrey S. and Hicks, Michael and Van Horn, David},
+title = {Incremental computation with names},
+year = {2015},
+isbn = {9781450336895},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2814270.2814305},
+doi = {10.1145/2814270.2814305},
+abstract = {Over the past thirty years, there has been significant progress in developing general-purpose, language-based approaches to incremental computation, which aims to efficiently update the result of a computation when an input is changed. A key design challenge in such approaches is how to provide efficient incremental support for a broad range of programs. In this paper, we argue that first-class names are a critical linguistic feature for efficient incremental computation. Names identify computations to be reused across differing runs of a program, and making them first class gives programmers a high level of control over reuse. We demonstrate the benefits of names by presenting Nominal Adapton, an ML-like language for incremental computation with names. We describe how to use Nominal Adapton to efficiently incrementalize several standard programming patterns---including maps, folds, and unfolds---and show how to build efficient, incremental probabilistic trees and tries. Since Nominal Adapton's implementation is subtle, we formalize it as a core calculus and prove it is from-scratch consistent, meaning it always produces the same answer as simply re-running the computation. Finally, we demonstrate that Nominal Adapton can provide large speedups over both from-scratch computation and Adapton, a previous state-of-the-art incremental computation system.},
+booktitle = {Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
+pages = {748–766},
+numpages = {19},
+keywords = {thunks, structural matching, self-adjusting computation, nominal matching, memoization, laziness, incremental compu- tation, demanded computation graph (DCG), call-by-push-value (CBPV)},
+location = {Pittsburgh, PA, USA},
+series = {OOPSLA 2015}
 }
 
 @inproceedings{ICC,
-  title={Incremental computation via function caching},
-  author={Pugh, William and Teitelbaum, Tim},
-  booktitle={Proceedings of the 16th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
-  pages={315--328},
-  year={1989}
+author = {Pugh, W. and Teitelbaum, T.},
+title = {Incremental computation via function caching},
+year = {1989},
+isbn = {0897912942},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/75277.75305},
+doi = {10.1145/75277.75305},
+booktitle = {Proceedings of the 16th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {315–328},
+numpages = {14},
+location = {Austin, Texas, USA},
+series = {POPL '89}
 }
 
 @inproceedings{DDF,
 author = {McSherry, Frank and Murray, Derek and Isaacs, Rebecca and Isard, Michael},
 title = {Differential dataflow},
-booktitle = {Proceedings of CIDR 2013},
+booktitle = {{Proceedings of CIDR 2013}},
 year = {2013},
 month = {January},
-abstract = {Existing computational models for processing continuously changing input data are unable to efficiently support iterative queries except in limited special cases. This makes it difficult to perform complex tasks, such as social-graph analysis on changing data at interactive timescales, which would greatly benefit those analyzing the behavior of services like Twitter. In this paper we introduce a new model called differential computation, which extends traditional incremental computation to allow arbitrarily nested iteration, and explain---with reference to a publicly available prototype system called Naiad---how differential computation can be efficiently implemented in the context of a declarative data-parallel dataflow language. The resulting system makes it easy to program previously intractable algorithms such as incrementally updated strongly connected components, and integrate them with data transformation operations to obtain practically relevant insights from real data streams.},
 url = {https://www.microsoft.com/en-us/research/publication/differential-dataflow/},
-edition = {Proceedings of CIDR 2013},
 }
 
 @inproceedings{yufeng-1,
-  title={Tree traversal synthesis using domain-specific symbolic compilation},
-  author={Chen, Yanju and Liu, Junrui and Feng, Yu and Bodik, Rastislav},
-  booktitle={Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems},
-  pages={1030--1042},
-  year={2022}
+author = {Chen, Yanju and Liu, Junrui and Feng, Yu and Bodik, Rastislav},
+title = {Tree traversal synthesis using domain-specific symbolic compilation},
+year = {2022},
+isbn = {9781450392051},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3503222.3507751},
+doi = {10.1145/3503222.3507751},
+abstract = {Efficient computation on tree data structures is important in compilers, numeric computations, and web browser layout engines. Efficiency is achieved by statically scheduling the computation into a small number of tree traversals and by performing the traversals in parallel when possible. Manual design of such traversals leads to bugs, as observed in web browsers. Automatic schedulers avoid these bugs but they currently cannot explore a space of legal traversals, which prevents exploring the trade-offs between parallelism and minimizing the number of traversals. We describe Hecate, a synthesizer of tree traversals that can produce both serial and parallel traversals. A key feature is that the synthesizer is extensible by the programmer who can define a template for new kinds of traversals. Hecate is constructed as a solver-aided domain-specific language, meaning that the synthesizer is generated automatically by translating the tree traversal DSL to an SMT solver that synthesizes the traversals. We improve on the general-purpose solver-aided architecture with a scheduling-specific symbolic evaluation that maintains the engineering advantages solver-aided design but generates efficient ILP encoding that is much more efficient to solve than SMT constraints. On the set of Grafter problems, Hecate synthesizes traversals that trade off traversal fusion to exploit parallelism. Additionally, Hecate allows defining a tree data structure with an arbitrary number of children. Together, parallelism and data structure improvements accelerate the computation 2\texttimes{} on a tree rendering problem. Finally, Hecate’s domain-specific symbolic compilation accelerates synthesis 3\texttimes{} compared to the general-purpose compilation to an SMT solver; when scheduling a CSS engine traversal, this ILP-based synthesis executes orders of magnitude faster.},
+booktitle = {Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems},
+pages = {1030–1042},
+numpages = {13},
+keywords = {program synthesis, symbolic compilation, tree traversal},
+location = {Lausanne, Switzerland},
+series = {ASPLOS '22}
 }
 
 @article{yufeng-2,
-  title={Conflict-Driven synthesis for layout engines},
-  author={Liu, Junrui and Chen, Yanju and Atkinson, Eric and Feng, Yu and Bodik, Rastislav},
-  journal={Proceedings of the ACM on Programming Languages},
-  volume={7},
-  number={PLDI},
-  pages={638--659},
-  year={2023},
-  publisher={ACM New York, NY, USA}
+author = {Liu, Junrui and Chen, Yanju and Atkinson, Eric and Feng, Yu and Bodik, Rastislav},
+title = {Conflict-Driven Synthesis for Layout Engines},
+year = {2023},
+issue_date = {June 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {7},
+number = {PLDI},
+url = {https://doi.org/10.1145/3591246},
+doi = {10.1145/3591246},
+abstract = {Modern web browsers rely on layout engines to convert HTML documents to layout trees that specify color, size, and position. However, existing layout engines are notoriously difficult to maintain because of the complexity of web standards. This is especially true for incremental layout engines, which are designed to improve performance by updating only the parts of the layout tree that need to be changed. In this paper, we propose Medea, a new framework for automatically generating incremental layout engines. Medea separates the specification of the layout engine from its incremental implementation, and guarantees correctness through layout engine synthesis. The synthesis is driven by a new iterative algorithm based on detecting conflicts that prevent optimality of the incremental algorithm. We evaluated Medea on a fragment of HTML layout that includes challenging features such as margin collapse, floating layout, and absolute positioning. Medea successfully synthesized an incremental layout engine for this fragment. The synthesized layout engine is both correct and efficient. In particular, we demonstrated that it avoids real-world bugs that have been reported in the layout engines of Chrome, Firefox, and Safari. The incremental layout engine synthesized by Medea is up to 1.82\texttimes{} faster than a naive incremental baseline. We also demonstrated that our conflict-driven algorithm produces engines that are 2.74\texttimes{} faster than a baseline without conflict analysis.},
+journal = {Proc. ACM Program. Lang.},
+month = jun,
+articleno = {132},
+numpages = {22},
+keywords = {program synthesis}
 }
+
 @inproceedings{TR1,
     author = {Reps, Thomas},
     title = {Optimal-time incremental semantic analysis for syntax-directed editors},
@@ -137,13 +198,14 @@ series = {POPL '86}
 }
 
 @article{MEMO,
-  title={“Memo” Functions and Machine Learning},
-  author={Donald Michie},
-  journal={Nature},
-  year={1968},
-  volume={218},
-  pages={19-22},
-  url={https://api.semanticscholar.org/CorpusID:4265138}
+  author  = {Donald Michie},
+  title   = {“Memo” Functions and Machine Learning},
+  journal = {Nature},
+  volume  = {218},
+  pages   = {19--22},
+  year    = {1968},
+  publisher = {Nature Publishing Group},
+  doi     = {10.1038/218019a0}
 }
 
 @book{LM,
@@ -153,79 +215,138 @@ series = {POPL '86}
   publisher={University of California, Berkeley}
 }
 
-@inproceedings{SOM,
-  title={Two simplified algorithms for maintaining order in a list},
-  author={Bender, Michael A and Cole, Richard and Demaine, Erik D and Farach-Colton, Martin and Zito, Jack},
-  booktitle={European symposium on algorithms},
-  pages={152--164},
-  year={2002},
-  organization={Springer}
+@InProceedings{SOM,
+author="Bender, Michael A.
+and Cole, Richard
+and Demaine, Erik D.
+and Farach-Colton, Martin
+and Zito, Jack",
+editor="M{\"o}hring, Rolf
+and Raman, Rajeev",
+title="Two Simplified Algorithms for Maintaining Order in a List",
+booktitle="Algorithms --- ESA 2002",
+doi = {10.1007/3-540-45749-6_17},
+year="2002",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="152--164",
+abstract="In the Order-Maintenance Problem, the objective is to maintain a total order subject to insertions, deletions, and precedence queries. Known optimal solutions, due to Dietz and Sleator, are complicated. We present new algorithms that match the bounds of Dietz and Sleator. Our solutions are simple, and we present experimental evidence that suggests that they are superior in practice.",
+isbn="978-3-540-45749-7"
 }
 
 @inproceedings{OM,
-  title={Maintaining order in a linked list},
-  author={Dietz, Paul F},
-  booktitle={Proceedings of the fourteenth annual ACM symposium on Theory of computing},
-  pages={122--127},
-  year={1982}
+author = {Dietz, Paul F.},
+title = {Maintaining order in a linked list},
+year = {1982},
+isbn = {0897910702},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/800070.802184},
+doi = {10.1145/800070.802184},
+abstract = {We present a new representation for linked lists. This representation allows one to efficiently insert objects into the list and to quickly determine the order of list elements. The basic data structure, called an indexed 2-3 tree, allows one to do n inserts in O(nlogn) steps and to determine order in constant time. We speed up the algorithm by dividing the data structure up into log*n layers. The improved algorithm does n insertions and comparisons in O(nlog*n) steps. The paper concludes with two applications: determining ancestor relationships in a growing tree and maintaining a tree structured environment (context tree).},
+booktitle = {Proceedings of the Fourteenth Annual ACM Symposium on Theory of Computing},
+pages = {122–127},
+numpages = {6},
+location = {San Francisco, California, USA},
+series = {STOC '82}
 }
 
 @inproceedings{cassius-1,
-  title={Automated reasoning for web page layout},
-  author={Panchekha, Pavel and Torlak, Emina},
-  booktitle={Proceedings of the 2016 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
-  pages={181--194},
-  year={2016}
+author = {Panchekha, Pavel and Torlak, Emina},
+title = {Automated reasoning for web page layout},
+year = {2016},
+isbn = {9781450344449},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2983990.2984010},
+doi = {10.1145/2983990.2984010},
+abstract = {Web pages define their appearance using Cascading Style Sheets, a modular language for layout of tree-structured documents. In principle, using CSS is easy: the developer specifies declarative constraints on the layout of an HTML document (such as the positioning of nodes in the HTML tree), and the browser solves the constraints to produce a box-based rendering of that document. In practice, however, the subtleties of CSS semantics make it difficult to develop stylesheets that produce the intended layout across different user preferences and browser settings. This paper presents the first mechanized formalization of a substantial fragment of the CSS semantics. This formalization is equipped with an efficient reduction to the theory of quantifier-free linear real arithmetic, enabling effective automated reasoning about CSS stylesheets and their behavior. We implement this reduction in Cassius, a solver-aided framework for building semantics-aware tools for CSS. To demonstrate the utility of Cassius, we prototype new tools for automated verification, debugging, and synthesis of CSS code. We show that these tools work on fragments of real-world websites, and that Cassius is a practical first step toward solver-aided programming for the web.},
+booktitle = {Proceedings of the 2016 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
+pages = {181–194},
+numpages = {14},
+keywords = {synthesis, layout, cascading style sheets, Solver-aided tools, SMT},
+location = {Amsterdam, Netherlands},
+series = {OOPSLA 2016}
 }
 
 @article{cassius-2,
-  title={Verifying that web pages have accessible layout},
-  author={Panchekha, Pavel and Geller, Adam T and Ernst, Michael D and Tatlock, Zachary and Kamil, Shoaib},
-  journal={ACM SIGPLAN Notices},
-  volume={53},
-  number={4},
-  pages={1--14},
-  year={2018},
-  publisher={ACM New York, NY, USA}
+author = {Panchekha, Pavel and Geller, Adam T. and Ernst, Michael D. and Tatlock, Zachary and Kamil, Shoaib},
+title = {Verifying that web pages have accessible layout},
+year = {2018},
+issue_date = {April 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {53},
+number = {4},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/3296979.3192407},
+doi = {10.1145/3296979.3192407},
+abstract = {Usability and accessibility guidelines aim to make graphical user interfaces accessible to all users, by, say, requiring that text is sufficiently large, interactive controls are visible, and heading size corresponds to importance. These guidelines must hold on the infinitely many possible renderings of a web page generated by differing screen sizes, fonts, and other user preferences. Today, these guidelines are tested by manual inspection of a few renderings, because 1) the guidelines are not expressed in a formal language, 2) the semantics of browser rendering are not well understood, and 3) no tools exist to check all possible renderings of a web page. VizAssert solves these problems. First, it introduces visual logic to precisely specify accessibility properties. Second, it formalizes a large fragment of the browser rendering algorithm using novel finitization reductions. Third, it provides a sound, automated tool for verifying assertions in visual logic. We encoded 14 assertions drawn from best-practice accessibility and mobile-usability guidelines in visual logic. VizAssert checked them on on 62 professionally designed web pages. It found 64 distinct errors in the web pages, while reporting only 13 false positive warnings.},
+journal = {SIGPLAN Not.},
+month = jun,
+pages = {1–14},
+numpages = {14},
+keywords = {verification, usability, semantics, layout, accessibility, SMT, CSS}
 }
 
 @article{cassius-3,
-  title={Methods for Automatic Web Page Layout Testing and Analysis: A Review},
-  author={Prazina, Irfan and Be{\'c}irovi{\'c}, {\v{S}}eila and Cogo, Emir and Okanovi{\'c}, Vensada},
-  journal={IEEE Access},
-  volume={11},
-  pages={13948--13964},
+  author={Prazina, Irfan and Bećirović, Šeila and Cogo, Emir and Okanović, Vensada},
+  journal={IEEE Access}, 
+  title={Methods for Automatic Web Page Layout Testing and Analysis: A Review}, 
   year={2023},
-  publisher={IEEE}
+  volume={11},
+  number={},
+  pages={13948-13964},
+  keywords={Web pages;Layout;Information retrieval;Graphical user interfaces;Browsers;Human computer interaction;Software engineering;GUI similarity detection;GUI testing;HCI;information retrieval;software engineering},
+  doi={10.1109/ACCESS.2023.3242549}
 }
-
-
 
 @misc{tali-garseil,
 	author = {Tali Garseil},
-	title = {{H}ow browsers work --- taligarsiel.com},
+	title = {{H}ow browsers work},
+    year = {2009},
+    month = {Oct},
 	howpublished = {\url{https://taligarsiel.com/Projects/howbrowserswork1.htm##Dirty_bit_system}},
-	note = {[Accessed 05-11-2024]},
 }
 
 @misc{lighthouse,
 	author = {Chrome Team},
-	title = {{A}void an excessive {D}{O}{M} size | {L}ighthouse | {C}hrome for {D}evelopers --- developer.chrome.com},
+	title = {Avoid an excessive DOM size | Lighthouse | Chrome for Developers},
+    year={2024},
+    month={Jun},
 	howpublished = {\url{https://developer.chrome.com/docs/lighthouse/performance/dom-size}},
-	note = {[Accessed 05-11-2024]},
 }
 
 @inproceedings{meyerovich-1,
-  title={Parallelizing the web browser},
-  author={Jones, Christopher Grant and Liu, Rose and Meyerovich, Leo and Asanovic, Krste and Bodik, Rastislav}
+author = {Jones, Christopher Grant and Liu, Rose and Meyerovich, Leo and Asanovi\'{c}, Krste and Bod\'{\i}k, Rastislav},
+title = {Parallelizing the web browser},
+year = {2009},
+publisher = {USENIX Association},
+address = {USA},
+abstract = {We argue that the transition from laptops to handheld computers will happen only if we rethink the design of web browsers. Web browsers are an indispensable part of the end-user software stack but they are too inefficient for handhelds. While the laptop reused the software stack of its desktop ancestor, solid-state device trends suggest that today's browser designs will not become sufficiently (1) responsive and (2) energy-efficient. We argue that browser improvements must go beyond JavaScript JIT compilation and discuss how parallelism may help achieve these two goals. Motivated by a future browser-based application, we describe the preliminary design of our parallel browser, its work-efficient parallel algorithms, and an actor-based scripting language.},
+booktitle = {Proceedings of the First USENIX Conference on Hot Topics in Parallelism},
+pages = {7},
+numpages = {1},
+location = {Berkeley, California},
+series = {HotPar'09}
 }
 
 @inproceedings{meyerovich-2,
-  title={Fast and parallel webpage layout},
-  author={Meyerovich, Leo A and Bodik, Rastislav},
-  booktitle={Proceedings of the 19th international conference on World wide web},
-  pages={711--720},
-  year={2010}
+author = {Meyerovich, Leo A. and Bodik, Rastislav},
+title = {Fast and parallel webpage layout},
+year = {2010},
+isbn = {9781605587998},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1772690.1772763},
+doi = {10.1145/1772690.1772763},
+abstract = {The web browser is a CPU-intensive program. Especially on mobile devices, webpages load too slowly, expending significant time in processing a document's appearance. Due to power constraints, most hardware-driven speedups will come in the form of parallel architectures. This is also true of mobile devices such as phones and e-books. In this paper, we introduce new algorithms for CSS selector matching, layout solving, and font rendering, which represent key components for a fast layout engine. Evaluation on popular sites shows speedups as high as 80x. We also formulate the layout problem with attribute grammars, enabling us to not only parallelize our algorithm but prove that it computes in O(log) time and without reflow.},
+booktitle = {Proceedings of the 19th International Conference on World Wide Web},
+pages = {711–720},
+numpages = {10},
+keywords = {selector, multicore, mobile, layout, html, font, css, box model, attribute grammar},
+location = {Raleigh, North Carolina, USA},
+series = {WWW '10}
 }
 
 @book{meyerovich-3,
@@ -243,21 +364,23 @@ series = {POPL '86}
                and how that impacts web developers and other software engineers
                whose work touches the web.",
   publisher = "Oxford University Press",
-  month     =  sep,
-  year      =  2024,
+  month     =  {Mar},
+  year      =  2025,
   address   = "London, England",
-  language  = "en"
 }
 
 @article{HM,
-  title={A theory of type polymorphism in programming},
-  author={Milner, Robin},
-  journal={Journal of computer and system sciences},
-  volume={17},
-  number={3},
-  pages={348--375},
-  year={1978},
-  publisher={Elsevier}
+title = {A theory of type polymorphism in programming},
+journal = {Journal of Computer and System Sciences},
+volume = {17},
+number = {3},
+pages = {348-375},
+year = {1978},
+issn = {0022-0000},
+doi = {https://doi.org/10.1016/0022-0000(78)90014-4},
+url = {https://www.sciencedirect.com/science/article/pii/0022000078900144},
+author = {Robin Milner},
+abstract = {The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm W which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot “go wrong” and a Syntactic Soundness Theorem states that if W accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on W is in fact already implemented and working, for the metalanguage ML in the Edinburgh LCF system.}
 }
 
 @misc{css,
@@ -265,6 +388,14 @@ series = {POPL '86}
 	title = {{A}ll {C}{S}{S} specifications --- w3.org},
 	howpublished = {\url{https://www.w3.org/Style/CSS/specs.en.html}},
 	note = {[Accessed 14-11-2024]},
+}
+
+@misc{servo-no-parallel,
+  title={Layout 2013 and Layout 2020},
+  author = {Servo Project},
+  howpublished={\url{https://servo.org/blog/2023/04/13/layout-2013-vs-2020/}},
+  month={Oct},
+  year={2023},
 }
 
 @InProceedings{FTG,
@@ -278,6 +409,7 @@ year="2007",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="222--238",
+doi="10.1007/978-3-540-76637-7_15",
 abstract="We have built the first family of tagless interpretations for a higher-order typed object language in a typed metalanguage (Haskell or ML) that require no dependent types, generalized algebraic data types, or postprocessing to eliminate tags. The statically type-preserving interpretations include an evaluator, a compiler (or staged evaluator), a partial evaluator, and call-by-name and call-by-value CPS transformers.",
 isbn="978-3-540-76637-7"
 }
@@ -314,11 +446,19 @@ series = {PEPM 2024}
 }
 
 @inproceedings{IC-bib,
-  title={A categorized bibliography on incremental computation},
-  author={Ramalingam, Ganesan and Reps, Thomas},
-  booktitle={Proceedings of the 20th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
-  pages={502--510},
-  year={1993}
+author = {Ramalingam, G. and Reps, Thomas},
+title = {A categorized bibliography on incremental computation},
+year = {1993},
+isbn = {0897915607},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/158511.158710},
+doi = {10.1145/158511.158710},
+booktitle = {Proceedings of the 20th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {502–510},
+numpages = {9},
+location = {Charleston, South Carolina, USA},
+series = {POPL '93}
 }
 
 @inproceedings{Grafter,
@@ -327,15 +467,12 @@ title = {Sound, fine-grained traversal fusion for heterogeneous trees},
 year = {2019},
 isbn = {9781450367127},
 publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
 url = {https://doi.org/10.1145/3314221.3314626},
 doi = {10.1145/3314221.3314626},
-abstract = {Applications in many domains are based on a series of traversals of tree structures, and fusing these traversals together to reduce the total number of passes over the tree is a common, important optimization technique. In applications such as compilers and render trees, these trees are heterogeneous: different nodes of the tree have different types. Unfortunately, prior work for fusing traversals falls short in different ways: they do not handle heterogeneity; they require using domain-specific languages to express an application; they rely on the programmer to aver that fusing traversals is safe, without any soundness guarantee; or they can only perform coarse-grain fusion, leading to missed fusion opportunities. This paper addresses these shortcomings to build a framework for fusing traversals of heterogeneous trees that is automatic, sound, and fine-grained. We show across several case studies that our approach is able to allow programmers to write simple, intuitive traversals, and then automatically fuse them to substantially improve performance.},
 booktitle = {Proceedings of the 40th ACM SIGPLAN Conference on Programming Language Design and Implementation},
 pages = {830–844},
 numpages = {15},
 keywords = {Tree traversals, Locality, Fusion},
-location = {Phoenix, AZ, USA},
 series = {PLDI 2019}
 }
 

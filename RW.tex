@@ -14,16 +14,16 @@ The recent Self-Adjusting Computation (SAC)~\cite{SAC} framework
   and opportunities for parallelization~\cite{PSAC}.
 The Adapton framework~\cite{Adapton}
   aims at \emph{demand-driven} incremental computation,
-  and allows manually-specified annotations~\citet{AdaptonName}
+  and allows manually-specified annotations~\cite{AdaptonName}
   for greater reuse.
 While this prior work focuses on general-purpose computations,
   Spineless Traversal is focused on a particularly critical application: web browser layout.
 This application-specific focus has precedent:
   \citet{ICC} speed up memoization for functional programs over lists
   using ``chunky decomposition'',
-  while differential dataflow databases~\cite{DDF}
-  that incrementalize relational algebra
-  are prominent in industry.
+  while differential dataflow~\cite{DDF},
+  which incrementalizes relational algebra in databases,
+  is prominent in industry.
 
 \citet{TR1} wrote the earliest work
   on incremental evaluation of attribute grammars,
@@ -37,10 +37,8 @@ However, these early papers require recomputation
   and perform layout only once per frame.
 The standard in web browsers is instead
   the Double Dirty Bit algorithm,
-  implemented in all existing web rendering engines.
-Industry publication \texttt{web.dev}
-  ran an article on Double Dirty Bit~\cite{tali-garseil},
-  and the algorithm also features in textbooks~\cite{wbe}.
+  described in industry publications~\cite{tali-garseil}
+  and textbooks~\cite{wbe}.
   
 The formal methods community has put significant effort
   into formalizing web page layout.
@@ -50,13 +48,14 @@ The formal methods community has put significant effort
 Later work~\cite{yufeng-1} proposes
   synthesizing schedules from the attribute grammar rules,
   including proposals~\cite{meyerovich-2,meyerovich-3}
-  to use parallel schedules to further improve layout performance.
+  to use parallel schedules to further improve layout performance,
+  though these proposals have not proven practical~\cite{servo-no-parallel}.
 The Cassius project~\cite{cassius-1}
-  formalized a significant fragment of CSS~2.1
+  formalizes a significant fragment of CSS~2.1
   using an attribute-grammar-like formalism.
 Our layout implementation is based on Cassius.
-Later work~\cite{cassius-2} also proposed
-  using the Cassius formalism to verify web page layouts,
+Later work also proposed
+  using the Cassius formalism to verify web page layouts~\cite{cassius-2},
   including in a custom proof assistant~\cite{cassius-3}.
 However, none of these works investigate incremental layout.
 By contrast, the \textsc{Medea} project~\cite{yufeng-2}
