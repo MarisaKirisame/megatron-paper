@@ -124,7 +124,8 @@ return result;
 
 \subsection{Branchless Order Maintenance Comparison}
 
-Priority queue pushes and pops spend basically all of their time
+By using a binary heap, which has great cache locality,
+priority queue pushes and pops spend basically all of their time
   comparing order maintenance objects.
 Order maintenance objects are small and,
   thanks to our allocator, typically in cache.
@@ -143,6 +144,7 @@ Assembly makes the implementation non-portable,
   but this function is critical for performance
   and we weren't able to make the C++ compiler
   generate comparably-fast code, despite several attempts.
+If portability is a concern, we also provided a branchless version implemented using bit operations.
 
 \subsection{Attempted, Failed Optimizations}
 
