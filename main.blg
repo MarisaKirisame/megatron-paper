@@ -3,47 +3,63 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 Reallocating 'name_of_file' (item size: 1) to 12 items.
 A level-1 auxiliary file: numbers.aux
-I found no \bibdata command---while reading file main.aux
-I found no \bibstyle command---while reading file main.aux
-You've used 17 entries,
-            0 wiz_defined-function locations,
-            106 strings with 642 characters,
-and the built_in function-call counts, 0 in all, are:
-= -- 0
-> -- 0
+Reallocating 'name_of_file' (item size: 1) to 21 items.
+The style file: ACM-Reference-Format.bst
+Reallocating 'name_of_file' (item size: 1) to 5 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 6000 items.
+Database file #1: main.bib
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'glb_str_end' (item size: 4) to 20 items.
+Reallocating 'glb_str_ptr' (item size: 4) to 20 items.
+Reallocating 'global_strs' (item size: 1) to 4000000 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 9000 items.
+Warning--empty publisher in DDF
+Warning--empty address in DDF
+Warning--page numbers missing in both pages and numpages fields in DDF
+Warning--empty address in meyerovich-3
+Warning--empty address in grafter
+You've used 30 entries,
+            6056 wiz_defined-function locations,
+            1779 strings with 25525 characters,
+and the built_in function-call counts, 34346 in all, are:
+= -- 4182
+> -- 944
 < -- 0
-+ -- 0
-- -- 0
-* -- 0
-:= -- 0
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
-chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 0
-format.name$ -- 0
-if$ -- 0
-int.to.chr$ -- 0
-int.to.str$ -- 0
-missing$ -- 0
-newline$ -- 0
-num.names$ -- 0
-pop$ -- 0
-preamble$ -- 0
-purify$ -- 0
++ -- 305
+- -- 355
+* -- 2350
+:= -- 3180
+add.period$ -- 153
+call.type$ -- 30
+change.case$ -- 203
+chr.to.int$ -- 30
+cite$ -- 35
+duplicate$ -- 3314
+empty$ -- 2209
+format.name$ -- 411
+if$ -- 8305
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 117
+newline$ -- 309
+num.names$ -- 212
+pop$ -- 1145
+preamble$ -- 1
+purify$ -- 443
 quote$ -- 0
-skip$ -- 0
+skip$ -- 1393
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
-text.length$ -- 0
+substring$ -- 2535
+swap$ -- 481
+text.length$ -- 38
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 0
-warning$ -- 0
-while$ -- 0
+type$ -- 786
+warning$ -- 5
+while$ -- 186
 width$ -- 0
-write$ -- 0
-(There were 2 error messages)
+write$ -- 686
+(There were 5 warnings)

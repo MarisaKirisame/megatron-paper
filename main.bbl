@@ -1,0 +1,461 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{30}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Acar(2009)]%
+        {SACCost}
+\bibfield{author}{\bibinfo{person}{Umut~A. Acar}.}
+  \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Self-adjusting computation: (an overview)}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2009 ACM SIGPLAN Workshop on
+  Partial Evaluation and Program Manipulation}} (Savannah, GA, USA)
+  \emph{(\bibinfo{series}{PEPM '09})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{address}{New York, NY, USA},
+  \bibinfo{pages}{1–6}.
+\newblock
+\showISBNx{9781605583273}
+\href{https://doi.org/10.1145/1480945.1480946}{doi:\nolinkurl{10.1145/1480945.1480946}}
+
+
+\bibitem[Acar et~al\mbox{.}(2005)]%
+        {SAC}
+\bibfield{author}{\bibinfo{person}{Umut~A. Acar}, \bibinfo{person}{Guy
+  Blelloch}, {and} \bibinfo{person}{Robert Harper}.}
+  \bibinfo{year}{2005}\natexlab{}.
+\newblock \emph{\bibinfo{title}{Self-adjusting computation}}.
+\newblock \bibinfo{thesistype}{Ph.\,D. Dissertation}. \bibinfo{school}{Carnegie
+  Mellon University}, \bibinfo{address}{USA}.
+\newblock
+\showISBNx{0542015471}
+\newblock
+\shownote{AAI3166271}.
+
+
+\bibitem[Acar et~al\mbox{.}(2010)]%
+        {SACTrace}
+\bibfield{author}{\bibinfo{person}{Umut~A. Acar}, \bibinfo{person}{Guy
+  Blelloch}, \bibinfo{person}{Ruy Ley-Wild}, \bibinfo{person}{Kanat
+  Tangwongsan}, {and} \bibinfo{person}{Duru Turkoglu}.}
+  \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{Traceable data types for self-adjusting
+  computation}. In \bibinfo{booktitle}{\emph{Proceedings of the 31st ACM
+  SIGPLAN Conference on Programming Language Design and Implementation}}
+  (Toronto, Ontario, Canada) \emph{(\bibinfo{series}{PLDI '10})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{483–496}.
+\newblock
+\showISBNx{9781450300193}
+\href{https://doi.org/10.1145/1806596.1806650}{doi:\nolinkurl{10.1145/1806596.1806650}}
+
+
+\bibitem[Anderson et~al\mbox{.}(2021)]%
+        {PSAC}
+\bibfield{author}{\bibinfo{person}{Daniel Anderson}, \bibinfo{person}{Guy~E.
+  Blelloch}, \bibinfo{person}{Anubhav Baweja}, {and} \bibinfo{person}{Umut~A.
+  Acar}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Efficient Parallel Self-Adjusting Computation}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 33rd ACM Symposium on
+  Parallelism in Algorithms and Architectures}} (Virtual Event, USA)
+  \emph{(\bibinfo{series}{SPAA '21})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{address}{New York, NY, USA},
+  \bibinfo{pages}{59–70}.
+\newblock
+\showISBNx{9781450380706}
+\href{https://doi.org/10.1145/3409964.3461799}{doi:\nolinkurl{10.1145/3409964.3461799}}
+
+
+\bibitem[Bender et~al\mbox{.}(2002)]%
+        {SOM}
+\bibfield{author}{\bibinfo{person}{Michael~A. Bender}, \bibinfo{person}{Richard
+  Cole}, \bibinfo{person}{Erik~D. Demaine}, \bibinfo{person}{Martin
+  Farach-Colton}, {and} \bibinfo{person}{Jack Zito}.}
+  \bibinfo{year}{2002}\natexlab{}.
+\newblock \showarticletitle{Two Simplified Algorithms for Maintaining Order in
+  a List}. In \bibinfo{booktitle}{\emph{Algorithms --- ESA 2002}},
+  \bibfield{editor}{\bibinfo{person}{Rolf M{\"o}hring} {and}
+  \bibinfo{person}{Rajeev Raman}} (Eds.). \bibinfo{publisher}{Springer Berlin
+  Heidelberg}, \bibinfo{address}{Berlin, Heidelberg},
+  \bibinfo{pages}{152--164}.
+\newblock
+\showISBNx{978-3-540-45749-7}
+\href{https://doi.org/10.1007/3-540-45749-6_17}{doi:\nolinkurl{10.1007/3-540-45749-6_17}}
+
+
+\bibitem[Chen et~al\mbox{.}(2022)]%
+        {yufeng-1}
+\bibfield{author}{\bibinfo{person}{Yanju Chen}, \bibinfo{person}{Junrui Liu},
+  \bibinfo{person}{Yu Feng}, {and} \bibinfo{person}{Rastislav Bodik}.}
+  \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{Tree traversal synthesis using domain-specific
+  symbolic compilation}. In \bibinfo{booktitle}{\emph{Proceedings of the 27th
+  ACM International Conference on Architectural Support for Programming
+  Languages and Operating Systems}} (Lausanne, Switzerland)
+  \emph{(\bibinfo{series}{ASPLOS '22})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{address}{New York, NY, USA},
+  \bibinfo{pages}{1030–1042}.
+\newblock
+\showISBNx{9781450392051}
+\href{https://doi.org/10.1145/3503222.3507751}{doi:\nolinkurl{10.1145/3503222.3507751}}
+
+
+\bibitem[Dietz(1982)]%
+        {OM}
+\bibfield{author}{\bibinfo{person}{Paul~F. Dietz}.}
+  \bibinfo{year}{1982}\natexlab{}.
+\newblock \showarticletitle{Maintaining order in a linked list}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the Fourteenth Annual ACM Symposium
+  on Theory of Computing}} (San Francisco, California, USA)
+  \emph{(\bibinfo{series}{STOC '82})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{address}{New York, NY, USA},
+  \bibinfo{pages}{122–127}.
+\newblock
+\showISBNx{0897910702}
+\href{https://doi.org/10.1145/800070.802184}{doi:\nolinkurl{10.1145/800070.802184}}
+
+
+\bibitem[Garseil(2009)]%
+        {tali-garseil}
+\bibfield{author}{\bibinfo{person}{Tali Garseil}.}
+  \bibinfo{year}{2009}\natexlab{}.
+\newblock \bibinfo{title}{{H}ow browsers work}.
+\newblock
+  \bibinfo{howpublished}{\url{https://taligarsiel.com/Projects/howbrowserswork1.htm##Dirty_bit_system}}.
+\newblock
+
+
+\bibitem[Hammer et~al\mbox{.}(2015)]%
+        {AdaptonName}
+\bibfield{author}{\bibinfo{person}{Matthew~A. Hammer}, \bibinfo{person}{Jana
+  Dunfield}, \bibinfo{person}{Kyle Headley}, \bibinfo{person}{Nicholas Labich},
+  \bibinfo{person}{Jeffrey~S. Foster}, \bibinfo{person}{Michael Hicks}, {and}
+  \bibinfo{person}{David Van~Horn}.} \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{Incremental computation with names}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2015 ACM SIGPLAN International
+  Conference on Object-Oriented Programming, Systems, Languages, and
+  Applications}} (Pittsburgh, PA, USA) \emph{(\bibinfo{series}{OOPSLA 2015})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{748–766}.
+\newblock
+\showISBNx{9781450336895}
+\href{https://doi.org/10.1145/2814270.2814305}{doi:\nolinkurl{10.1145/2814270.2814305}}
+
+
+\bibitem[Hammer et~al\mbox{.}(2014)]%
+        {Adapton}
+\bibfield{author}{\bibinfo{person}{Matthew~A. Hammer},
+  \bibinfo{person}{Khoo~Yit Phang}, \bibinfo{person}{Michael Hicks}, {and}
+  \bibinfo{person}{Jeffrey~S. Foster}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Adapton: composable, demand-driven incremental
+  computation}. In \bibinfo{booktitle}{\emph{Proceedings of the 35th ACM
+  SIGPLAN Conference on Programming Language Design and Implementation}}
+  (Edinburgh, United Kingdom) \emph{(\bibinfo{series}{PLDI '14})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{156–166}.
+\newblock
+\showISBNx{9781450327848}
+\href{https://doi.org/10.1145/2594291.2594324}{doi:\nolinkurl{10.1145/2594291.2594324}}
+
+
+\bibitem[Jones et~al\mbox{.}(2009)]%
+        {meyerovich-1}
+\bibfield{author}{\bibinfo{person}{Christopher~Grant Jones},
+  \bibinfo{person}{Rose Liu}, \bibinfo{person}{Leo Meyerovich},
+  \bibinfo{person}{Krste Asanovi\'{c}}, {and} \bibinfo{person}{Rastislav
+  Bod\'{\i}k}.} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Parallelizing the web browser}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the First USENIX Conference on Hot
+  Topics in Parallelism}} (Berkeley, California)
+  \emph{(\bibinfo{series}{HotPar'09})}. \bibinfo{publisher}{USENIX
+  Association}, \bibinfo{address}{USA}, \bibinfo{pages}{7}.
+\newblock
+
+
+\bibitem[Kiselyov(2018)]%
+        {MetaOCaml}
+\bibfield{author}{\bibinfo{person}{Oleg Kiselyov}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Reconciling Abstraction with High Performance: A
+  MetaOCaml approach}.
+\newblock \bibinfo{journal}{\emph{Foundations and Trends® in Programming
+  Languages}} \bibinfo{volume}{5}, \bibinfo{number}{1} (\bibinfo{year}{2018}),
+  \bibinfo{pages}{1--101}.
+\newblock
+\showISSN{2325-1107}
+\href{https://doi.org/10.1561/2500000038}{doi:\nolinkurl{10.1561/2500000038}}
+
+
+\bibitem[Liu et~al\mbox{.}(2023)]%
+        {yufeng-2}
+\bibfield{author}{\bibinfo{person}{Junrui Liu}, \bibinfo{person}{Yanju Chen},
+  \bibinfo{person}{Eric Atkinson}, \bibinfo{person}{Yu Feng}, {and}
+  \bibinfo{person}{Rastislav Bodik}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Conflict-Driven Synthesis for Layout Engines}.
+\newblock \bibinfo{journal}{\emph{Proc. ACM Program. Lang.}}
+  \bibinfo{volume}{7}, \bibinfo{number}{PLDI}, Article \bibinfo{articleno}{132}
+  (\bibinfo{date}{June} \bibinfo{year}{2023}), \bibinfo{numpages}{22}~pages.
+\newblock
+\href{https://doi.org/10.1145/3591246}{doi:\nolinkurl{10.1145/3591246}}
+
+
+\bibitem[Liu(2024)]%
+        {IC-Survey}
+\bibfield{author}{\bibinfo{person}{Yanhong~A. Liu}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Incremental Computation: What Is the Essence?
+  (Invited Contribution)}. In \bibinfo{booktitle}{\emph{Proceedings of the 2024
+  ACM SIGPLAN International Workshop on Partial Evaluation and Program
+  Manipulation}} (London, UK) \emph{(\bibinfo{series}{PEPM 2024})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{39–52}.
+\newblock
+\showISBNx{9798400704871}
+\href{https://doi.org/10.1145/3635800.3637447}{doi:\nolinkurl{10.1145/3635800.3637447}}
+
+
+\bibitem[McSherry et~al\mbox{.}(2013)]%
+        {DDF}
+\bibfield{author}{\bibinfo{person}{Frank McSherry}, \bibinfo{person}{Derek
+  Murray}, \bibinfo{person}{Rebecca Isaacs}, {and} \bibinfo{person}{Michael
+  Isard}.} \bibinfo{year}{2013}\natexlab{}.
+\newblock \showarticletitle{Differential dataflow}. In
+  \bibinfo{booktitle}{\emph{{Proceedings of CIDR 2013}}}.
+\newblock
+\urldef\tempurl%
+\url{https://www.microsoft.com/en-us/research/publication/differential-dataflow/}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Meyerovich(2013)]%
+        {meyerovich-3}
+\bibfield{author}{\bibinfo{person}{Leo~Alexander Meyerovich}.}
+  \bibinfo{year}{2013}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Parallel Layout Engines: Synthesis and
+  Optimization of Tree Traversals}}.
+\newblock \bibinfo{publisher}{University of California, Berkeley}.
+\newblock
+
+
+\bibitem[Meyerovich and Bodik(2010)]%
+        {meyerovich-2}
+\bibfield{author}{\bibinfo{person}{Leo~A. Meyerovich} {and}
+  \bibinfo{person}{Rastislav Bodik}.} \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{Fast and parallel webpage layout}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 19th International Conference on
+  World Wide Web}} (Raleigh, North Carolina, USA) \emph{(\bibinfo{series}{WWW
+  '10})}. \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{711–720}.
+\newblock
+\showISBNx{9781605587998}
+\href{https://doi.org/10.1145/1772690.1772763}{doi:\nolinkurl{10.1145/1772690.1772763}}
+
+
+\bibitem[Michie(1968)]%
+        {memo}
+\bibfield{author}{\bibinfo{person}{Donald Michie}.}
+  \bibinfo{year}{1968}\natexlab{}.
+\newblock \showarticletitle{“Memo” Functions and Machine Learning}.
+\newblock \bibinfo{journal}{\emph{Nature}}  \bibinfo{volume}{218}
+  (\bibinfo{year}{1968}), \bibinfo{pages}{19--22}.
+\newblock
+\href{https://doi.org/10.1038/218019a0}{doi:\nolinkurl{10.1038/218019a0}}
+
+
+\bibitem[Milner(1978)]%
+        {HM}
+\bibfield{author}{\bibinfo{person}{Robin Milner}.}
+  \bibinfo{year}{1978}\natexlab{}.
+\newblock \showarticletitle{A theory of type polymorphism in programming}.
+\newblock \bibinfo{journal}{\emph{J. Comput. System Sci.}}
+  \bibinfo{volume}{17}, \bibinfo{number}{3} (\bibinfo{year}{1978}),
+  \bibinfo{pages}{348--375}.
+\newblock
+\showISSN{0022-0000}
+\href{https://doi.org/10.1016/0022-0000(78)90014-4}{doi:\nolinkurl{10.1016/0022-0000(78)90014-4}}
+
+
+\bibitem[Panchekha et~al\mbox{.}(2018)]%
+        {cassius-2}
+\bibfield{author}{\bibinfo{person}{Pavel Panchekha}, \bibinfo{person}{Adam~T.
+  Geller}, \bibinfo{person}{Michael~D. Ernst}, \bibinfo{person}{Zachary
+  Tatlock}, {and} \bibinfo{person}{Shoaib Kamil}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Verifying that web pages have accessible layout}.
+\newblock \bibinfo{journal}{\emph{SIGPLAN Not.}} \bibinfo{volume}{53},
+  \bibinfo{number}{4} (\bibinfo{date}{June} \bibinfo{year}{2018}),
+  \bibinfo{pages}{1–14}.
+\newblock
+\showISSN{0362-1340}
+\href{https://doi.org/10.1145/3296979.3192407}{doi:\nolinkurl{10.1145/3296979.3192407}}
+
+
+\bibitem[Panchekha and Harrelson(2025)]%
+        {wbe}
+\bibfield{author}{\bibinfo{person}{Pavel Panchekha} {and}
+  \bibinfo{person}{Chris Harrelson}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Web browser engineering}}.
+\newblock \bibinfo{publisher}{Oxford University Press},
+  \bibinfo{address}{London, England}.
+\newblock
+
+
+\bibitem[Panchekha and Torlak(2016)]%
+        {cassius-1}
+\bibfield{author}{\bibinfo{person}{Pavel Panchekha} {and}
+  \bibinfo{person}{Emina Torlak}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Automated reasoning for web page layout}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2016 ACM SIGPLAN International
+  Conference on Object-Oriented Programming, Systems, Languages, and
+  Applications}} (Amsterdam, Netherlands) \emph{(\bibinfo{series}{OOPSLA
+  2016})}. \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{181–194}.
+\newblock
+\showISBNx{9781450344449}
+\href{https://doi.org/10.1145/2983990.2984010}{doi:\nolinkurl{10.1145/2983990.2984010}}
+
+
+\bibitem[Prazina et~al\mbox{.}(2023)]%
+        {cassius-3}
+\bibfield{author}{\bibinfo{person}{Irfan Prazina}, \bibinfo{person}{Šeila
+  Bećirović}, \bibinfo{person}{Emir Cogo}, {and} \bibinfo{person}{Vensada
+  Okanović}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Methods for Automatic Web Page Layout Testing and
+  Analysis: A Review}.
+\newblock \bibinfo{journal}{\emph{IEEE Access}}  \bibinfo{volume}{11}
+  (\bibinfo{year}{2023}), \bibinfo{pages}{13948--13964}.
+\newblock
+\href{https://doi.org/10.1109/ACCESS.2023.3242549}{doi:\nolinkurl{10.1109/ACCESS.2023.3242549}}
+
+
+\bibitem[Project(2023)]%
+        {servo-no-parallel}
+\bibfield{author}{\bibinfo{person}{Servo Project}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Layout 2013 and Layout 2020}.
+\newblock
+  \bibinfo{howpublished}{\url{https://servo.org/blog/2023/04/13/layout-2013-vs-2020/}}.
+\newblock
+
+
+\bibitem[Pugh and Teitelbaum(1989)]%
+        {ICC}
+\bibfield{author}{\bibinfo{person}{W. Pugh} {and} \bibinfo{person}{T.
+  Teitelbaum}.} \bibinfo{year}{1989}\natexlab{}.
+\newblock \showarticletitle{Incremental computation via function caching}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 16th ACM SIGPLAN-SIGACT
+  Symposium on Principles of Programming Languages}} (Austin, Texas, USA)
+  \emph{(\bibinfo{series}{POPL '89})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{address}{New York, NY, USA},
+  \bibinfo{pages}{315–328}.
+\newblock
+\showISBNx{0897912942}
+\href{https://doi.org/10.1145/75277.75305}{doi:\nolinkurl{10.1145/75277.75305}}
+
+
+\bibitem[Ramalingam and Reps(1993)]%
+        {IC-bib}
+\bibfield{author}{\bibinfo{person}{G. Ramalingam} {and} \bibinfo{person}{Thomas
+  Reps}.} \bibinfo{year}{1993}\natexlab{}.
+\newblock \showarticletitle{A categorized bibliography on incremental
+  computation}. In \bibinfo{booktitle}{\emph{Proceedings of the 20th ACM
+  SIGPLAN-SIGACT Symposium on Principles of Programming Languages}}
+  (Charleston, South Carolina, USA) \emph{(\bibinfo{series}{POPL '93})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{502–510}.
+\newblock
+\showISBNx{0897915607}
+\href{https://doi.org/10.1145/158511.158710}{doi:\nolinkurl{10.1145/158511.158710}}
+
+
+\bibitem[Reps(1982)]%
+        {TR1}
+\bibfield{author}{\bibinfo{person}{Thomas Reps}.}
+  \bibinfo{year}{1982}\natexlab{}.
+\newblock \showarticletitle{Optimal-time incremental semantic analysis for
+  syntax-directed editors}. In \bibinfo{booktitle}{\emph{Proceedings of the 9th
+  ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages}}
+  (Albuquerque, New Mexico) \emph{(\bibinfo{series}{POPL '82})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{169–176}.
+\newblock
+\showISBNx{0897910656}
+\href{https://doi.org/10.1145/582153.582172}{doi:\nolinkurl{10.1145/582153.582172}}
+
+
+\bibitem[Reps et~al\mbox{.}(1986)]%
+        {TR2}
+\bibfield{author}{\bibinfo{person}{Thomas~W. Reps}, \bibinfo{person}{Carla
+  Marceau}, {and} \bibinfo{person}{Tim Teitelbaum}.}
+  \bibinfo{year}{1986}\natexlab{}.
+\newblock \showarticletitle{Remote attribute updating for language-based
+  editors}. In \bibinfo{booktitle}{\emph{Proceedings of the 13th ACM
+  SIGACT-SIGPLAN Symposium on Principles of Programming Languages}} (St.
+  Petersburg Beach, Florida) \emph{(\bibinfo{series}{POPL '86})}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{address}{New York, NY, USA}, \bibinfo{pages}{1–13}.
+\newblock
+\showISBNx{9781450373470}
+\href{https://doi.org/10.1145/512644.512645}{doi:\nolinkurl{10.1145/512644.512645}}
+
+
+\bibitem[Sakka et~al\mbox{.}(2019)]%
+        {grafter}
+\bibfield{author}{\bibinfo{person}{Laith Sakka}, \bibinfo{person}{Kirshanthan
+  Sundararajah}, \bibinfo{person}{Ryan~R. Newton}, {and}
+  \bibinfo{person}{Milind Kulkarni}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Sound, fine-grained traversal fusion for
+  heterogeneous trees}. In \bibinfo{booktitle}{\emph{Proceedings of the 40th
+  ACM SIGPLAN Conference on Programming Language Design and Implementation}}
+  \emph{(\bibinfo{series}{PLDI 2019})}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{pages}{830–844}.
+\newblock
+\showISBNx{9781450367127}
+\href{https://doi.org/10.1145/3314221.3314626}{doi:\nolinkurl{10.1145/3314221.3314626}}
+
+
+\bibitem[Team(2024)]%
+        {lighthouse}
+\bibfield{author}{\bibinfo{person}{Chrome Team}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{Avoid an excessive DOM size | Lighthouse | Chrome for
+  Developers}.
+\newblock
+  \bibinfo{howpublished}{\url{https://developer.chrome.com/docs/lighthouse/performance/dom-size}}.
+\newblock
+
+
+\end{thebibliography}
