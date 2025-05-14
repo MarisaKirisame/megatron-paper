@@ -1,0 +1,8 @@
+We thank Andreas Kling and Chris Harrelson for many conversations
+discussing implementation challenges in layout invalidation and Ian
+Kilpatrick for his discussion of reflow roots. Ryan
+Stutsman and Anton Burtsev for helped with measuring low-level performance.
+We also thank the anonymous reviewers for their many comments and
+suggestions, which greatly improved the paper. This work was funded by
+the National Science Foundation under Grant No. CCF-2340192 and by a
+Google Faculty Research Award.
